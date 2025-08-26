@@ -43,3 +43,5 @@ display_image(blend_images(background, image))
 # display_image(image)
 # display_image(get_alpha_channel(image))
 
+save_image(image, 'image_stack.png')
+copy_image_to_clipboard(image)
