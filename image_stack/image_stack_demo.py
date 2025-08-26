@@ -9,12 +9,12 @@ def _():
     import marimo as mo
     from rp import load_video, blend_images, as_rgb_image, as_byte_image
     import rp
-    from image_stack import create_motion_blur_image
+    from image_stack import create_image_stack
     import numpy as np
     return (
         as_byte_image,
         blend_images,
-        create_motion_blur_image,
+        create_image_stack,
         load_video,
         mo,
         rp,
@@ -27,7 +27,7 @@ def _(
     as_byte_image,
     background_color_picker,
     blend_images,
-    create_motion_blur_image,
+    create_image_stack,
     frame_size_slider,
     mo,
     num_frames_slider,
@@ -42,7 +42,7 @@ def _(
     video_path_input,
     with_alpha_checkerboard,
 ):
-    result = create_motion_blur_image(
+    result = create_image_stack(
         video,
         num_frames=num_frames_slider.value,
         total_shift_x=shift_x_slider.value,

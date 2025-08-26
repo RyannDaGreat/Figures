@@ -62,13 +62,13 @@ def run_demo_and_capture(demo_dir, demo_name):
         elif demo_name == "image_stack":
             from rp import load_video, blend_images, as_rgb_image, as_byte_image
             import rp
-            from image_stack import create_motion_blur_image
+            from image_stack import create_image_stack
             
             # Use default values from the demo
             video_path = "/Users/ryan/Downloads/StillPepper.mp4"
             try:
                 video = load_video(video_path, use_cache=True)
-                result = create_motion_blur_image(
+                result = create_image_stack(
                     video,
                     num_frames=10,
                     total_shift_x=200,
@@ -146,7 +146,7 @@ def main():
         "## Usage",
         "",
         "```python",
-        "from FigureSnippets import film_strip, labeled_circle, create_motion_blur_image",
+        "from FigureSnippets import film_strip, labeled_circle, create_image_stack",
         "```",
         "",
         "Run interactive demos:",

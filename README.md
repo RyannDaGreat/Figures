@@ -17,7 +17,7 @@ Image and video processing utilities for creating visual effects.
 ## Usage
 
 ```python
-from FigureSnippets import film_strip, labeled_circle, create_motion_blur_image
+from FigureSnippets import film_strip, labeled_circle, create_image_stack
 ```
 
 Run interactive demos:

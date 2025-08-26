@@ -1,6 +1,6 @@
 from rp import *
 
-def create_motion_blur_image(
+def create_image_stack(
     video,
     num_frames=10,
     total_shift=200,
