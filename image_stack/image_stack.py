@@ -53,23 +53,3 @@ def create_motion_blur_image(
     return image
 
 
-if __name__ == "__main__":
-    # Example usage
-    path = "/Users/ryan/Downloads/StillPepper.mp4"
-    path = "/Users/ryan/Desktop/Screenshots/Screen Recording 2025-05-16 at 2.02.14 AM.mov"
-    path = "/Users/ryan/Desktop/Screenshots/Screen Recording 2024-11-13 at 3.38.10 PM.mov"
-    path = "/Users/ryan/Desktop/Screenshots/Screen Recording 2024-11-13 at 3.38.10 PM.mov"
-    path = "/Users/ryan/Downloads/MakeTheBaloonsMove.mp4"
-
-    video = load_video(path, use_cache=True)
-    image = create_motion_blur_image(video,total_shift_y=100)
-
-    import cv2
-    background="blue"
-    image=blend_images(background,image,)
-    image=as_rgb_image(image,copy=False)
-    image=as_byte_image(image,copy=False)
-    image=cv_bgr_rgb_swap(image,copy=False)
-
-    cv2.imshow("Display",image)
-    cv2.waitKey(10)
