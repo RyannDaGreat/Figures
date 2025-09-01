@@ -15,6 +15,7 @@ def _():
 
 @app.cell
 def _(
+    end_width_slider,
     fill_switch,
     fill_color_picker,
     mo,
@@ -24,6 +25,7 @@ def _(
     shadow_dy_slider,
     shadow_opacity_slider,
     shadow_switch,
+    start_width_slider,
     stroke_dash_scale_slider,
     stroke_phase_slider,
     stroke_cap_dropdown,
@@ -56,6 +58,8 @@ def _(
                 tip_width_slider,
                 tip_height_slider,
                 tip_dimple_slider,
+                start_width_slider,
+                end_width_slider,
             ]),
             mo.vstack([
                 mo.md("**Stroke Style**"),
@@ -86,6 +90,7 @@ def _(
         - Start: ({x0_slider.value}, {y0_slider.value})
         - End: ({x1_slider.value}, {y1_slider.value})
         - Tip: {tip_width_slider.value}px width, {tip_height_slider.value}px height, {tip_dimple_slider.value}px dimple
+        - Shaft: {start_width_slider.value}px start width, {end_width_slider.value}px end width
         - Stroke: {stroke_width_slider.value}px {stroke_type_dropdown.value}, {stroke_cap_dropdown.value} caps, {stroke_join_dropdown.value} joins
         - Fill: {"On" if fill_switch.value else "Off"} ({fill_color_picker.value}), Stroke: {"On" if stroke_switch.value else "Off"} ({stroke_color_picker.value})
         - Shadow: {"On" if shadow_switch.value else "Off"} at ({shadow_dx_slider.value}, {shadow_dy_slider.value}) color={shadow_color_picker.value} blur={shadow_blur_slider.value}px opacity={shadow_opacity_slider.value}
@@ -96,6 +101,7 @@ def _(
 
 @app.cell
 def _(
+    end_width_slider,
     fill_switch,
     fill_color_picker,
     rp,
@@ -106,6 +112,7 @@ def _(
     shadow_opacity_slider,
     shadow_switch,
     skia_draw_arrow,
+    start_width_slider,
     stroke_dash_scale_slider,
     stroke_phase_slider,
     stroke_cap_dropdown,
@@ -137,6 +144,8 @@ def _(
         tip_width=tip_width_slider.value,
         tip_height=tip_height_slider.value,
         tip_dimple=tip_dimple_slider.value,
+        end_width=end_width_slider.value,
+        start_width=start_width_slider.value,
         fill=fill_color_picker.value if fill_switch.value else None,
         stroke=stroke_switch.value,
         stroke_color=stroke_color_picker.value,
@@ -207,8 +216,18 @@ def _(mo):
         start=-50, stop=50, value=5, step=1,
         label="Tip Dimple:", include_input=True
     )
+    
+    end_width_slider = mo.ui.slider(
+        start=0, stop=50, value=5, step=1,
+        label="End Width:", include_input=True
+    )
+    
+    start_width_slider = mo.ui.slider(
+        start=0, stop=50, value=3, step=1,
+        label="Start Width:", include_input=True
+    )
 
-    return tip_dimple_slider, tip_height_slider, tip_width_slider
+    return end_width_slider, start_width_slider, tip_dimple_slider, tip_height_slider, tip_width_slider
 
 
 @app.cell
