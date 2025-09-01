@@ -16,9 +16,13 @@ def run_demo_and_capture(demo_dir, demo_name):
     """Run a demo function and capture its result image."""
     print(f"Processing {demo_name} demo...")
     
-    # Change to demo directory for imports to work
+    # Change to demo directory for imports to work (skip for animation demos)
     original_cwd = os.getcwd()
-    os.chdir(demo_dir)
+    if hasattr(demo_dir, '__fspath__') or isinstance(demo_dir, (str, bytes)):
+        os.chdir(demo_dir)
+    else:
+        # Virtual animation demo - stay in current directory
+        pass
     
     try:
         if demo_name == "film_strip":
@@ -548,7 +552,7 @@ def run_demo_and_capture(demo_dir, demo_name):
 
 def main():
     """Generate README.md with demo images."""
-    base_dir = Path(__file__).parent
+    base_dir = Path(__file__).parent.parent  # Go up one level since we're now in generate_readme/
     assets_dir = base_dir / "assets"
     assets_dir.mkdir(exist_ok=True)
     
@@ -560,9 +564,12 @@ def main():
     
     demo_dirs = sorted(demo_dirs, key=lambda x: x.name)
     
+    # Add virtual animation demos (no physical directories)
+    animation_demos = ["arrow_animation", "image_stack_animation"]
+    
     readme_content = ["# FigureSnippets", "", "Image and video processing utilities for creating visual effects.", ""]
     
-    # Process each demo
+    # Process each demo directory
     for demo_dir in demo_dirs:
         demo_name = demo_dir.name
         print(f"\\nProcessing {demo_name} demo...")
@@ -570,17 +577,7 @@ def main():
         # Run demo and capture result
         result_image = run_demo_and_capture(demo_dir, demo_name)
         
-        if demo_name in ["arrow_animation", "image_stack_animation"]:
-            # Use the GIF directly
-            gif_filename = f"{demo_name}.gif"
-            title = demo_name.replace("_", " ").title()
-            readme_content.extend([
-                f"## {title}",
-                "",
-                f"![{title}](assets/{gif_filename})",
-                ""
-            ])
-        elif result_image is not None:
+        if result_image is not None:
             # Save image to assets
             image_filename = f"{demo_name}_demo.png"
             image_path = assets_dir / image_filename
@@ -600,6 +597,31 @@ def main():
             ])
         else:
             print(f"Skipped {demo_name} (could not generate image)")
+    
+    # Process animation demos (virtual - no directories)
+    for demo_name in animation_demos:
+        print(f"\\nProcessing {demo_name} demo...")
+        
+        # Create a fake demo_dir object for compatibility
+        class FakeDir:
+            def __init__(self, name, parent):
+                self.name = name
+                self.parent = parent
+        
+        fake_demo_dir = FakeDir(demo_name, base_dir)
+        
+        # Run animation demo
+        run_demo_and_capture(fake_demo_dir, demo_name)
+        
+        # Add animation GIF to README
+        gif_filename = f"{demo_name}.gif"
+        title = demo_name.replace("_", " ").title()
+        readme_content.extend([
+            f"## {title}",
+            "",
+            f"![{title}](assets/{gif_filename})",
+            ""
+        ])
     
     # Add usage section
     readme_content.extend([

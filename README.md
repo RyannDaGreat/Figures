@@ -6,10 +6,6 @@ Image and video processing utilities for creating visual effects.
 
 ![Arrow](assets/arrow_demo.png)
 
-## Arrow Animation
-
-![Arrow Animation](assets/arrow_animation.gif)
-
 ## Film Strip
 
 ![Film Strip](assets/film_strip_demo.png)
@@ -18,13 +14,17 @@ Image and video processing utilities for creating visual effects.
 
 ![Image Stack](assets/image_stack_demo.png)
 
-## Image Stack Animation
-
-![Image Stack Animation](assets/image_stack_animation.gif)
-
 ## Labeled Circle
 
 ![Labeled Circle](assets/labeled_circle_demo.png)
+
+## Arrow Animation
+
+![Arrow Animation](assets/arrow_animation.gif)
+
+## Image Stack Animation
+
+![Image Stack Animation](assets/image_stack_animation.gif)
 
 ## Usage
 
