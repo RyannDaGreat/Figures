@@ -1,7 +1,7 @@
 """
-Labeled Circle submodule - Generate labeled circular graphics.
+Arrow submodule - Generate arrows with various styles.
 """
 
-from .labeled_circle import labeled_circle
+from .arrow import skia_draw_arrow
 
-__all__ = ['labeled_circle']
+__all__ = ['skia_draw_arrow']
