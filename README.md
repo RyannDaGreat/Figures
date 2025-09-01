@@ -18,6 +18,10 @@ Image and video processing utilities for creating visual effects.
 
 ![Image Stack](assets/image_stack_demo.png)
 
+## Image Stack Animation
+
+![Image Stack Animation](assets/image_stack_animation.gif)
+
 ## Labeled Circle
 
 ![Labeled Circle](assets/labeled_circle_demo.png)
