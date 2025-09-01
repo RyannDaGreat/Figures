@@ -1,27 +1,21 @@
 #!/usr/bin/env python3
-"""
-Arrow Animation Demo - Creates an animated GIF showing arrow parameter transitions
-"""
-
 import sys
-import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+import math
+sys.path.insert(0, '/opt/homebrew/lib/python3.10/site-packages/rp/git/Figures')
 
 from arrow import skia_draw_arrow
 import rp
-import math
+import numpy as np
+
+def lerp(a, b, t):
+    """Linear interpolation between a and b"""
+    return a + (b - a) * t
+
+def smooth_step(t):
+    """Smooth interpolation curve"""
+    return t * t * (3 - 2 * t)
 
 def create_arrow_animation():
-    """Create animated arrow sequence with interpolated parameters"""
-    
-    def lerp(a, b, t):
-        """Linear interpolation between a and b"""
-        return a + (b - a) * t
-    
-    def smooth_step(t):
-        """Smooth interpolation curve"""
-        return t * t * (3 - 2 * t)
-    
     # Animation settings
     frames = 100
     canvas_size = 512
@@ -189,19 +183,15 @@ def create_arrow_animation():
         )
         
         animation_frames.append(canvas)
-        if frame_idx % 10 == 0:
-            print(f"Generated frame {frame_idx + 1}/{frames}")
+        print(f"Generated frame {frame_idx + 1}/{frames}")
     
     return animation_frames
 
-if __name__ == "__main__":
-    print("Creating arrow animation...")
-    frames = create_arrow_animation()
-    
-    # Save as animated GIF
-    output_path = '../assets/arrow_animation.gif'
-    rp.save_animated_gif(frames, output_path)
-    print(f"Arrow animation saved to: {output_path}")
-    
-    # Display a sample frame
-    rp.display_image(frames[len(frames) // 2])
+# Generate animation
+print("Creating arrow animation...")
+frames = create_arrow_animation()
+
+# Save as animated GIF
+output_path = '/opt/homebrew/lib/python3.10/site-packages/rp/git/Figures/assets/arrow_animation.gif'
+rp.save_animated_gif(frames, output_path)
+print(f"Arrow animation saved to: {output_path}")
