@@ -1,4 +1,5 @@
-from rp import *
+import rp
+from rp.r import _omni_load
 from rp.git.Figures.labeled_circle import labeled_circle
 from rp.git.Figures.arrow.arrow import skia_draw_contour,skia_draw_contours,skia_draw_arrow
 
@@ -6,26 +7,26 @@ edit_path = "/Users/ryan/CleanCode/Projects/Google2025_Paper/inferblobs_edit_res
 edit_path = "/Users/ryan/CleanCode/Projects/Google2025_Paper/inferblobs_edit_results/[Seed 6303] Sora Basketball_ The ball goes into the hoop_copy1" ; indices = [3, 5]
 edit_path = "/Users/ryan/CleanCode/Projects/Google2025_Paper/inferblobs_edit_results/[Seed 1515] Blacks Freeze Camera_copy2" ; indices = slice(None)
 
-counter_video_path    = path_join(edit_path, "counter_video.mp4")
-target_video_path     = path_join(edit_path, "output_video.mp4")
-counter_tracks_path   = path_join(edit_path, "counter_tracks.pth")
-target_tracks_path    = path_join(edit_path, "target_tracks.pth")
-target_visibles_path  = path_join(edit_path, "target_visibles.pth")
-counter_visibles_path = path_join(edit_path, "counter_visibles.pth")
+counter_video_path    = rp.path_join(edit_path, "counter_video.mp4")
+target_video_path     = rp.path_join(edit_path, "output_video.mp4")
+counter_tracks_path   = rp.path_join(edit_path, "counter_tracks.pth")
+target_tracks_path    = rp.path_join(edit_path, "target_tracks.pth")
+target_visibles_path  = rp.path_join(edit_path, "target_visibles.pth")
+counter_visibles_path = rp.path_join(edit_path, "counter_visibles.pth")
 
-target_video     = load_video(target_video_path,  use_cache=True)
-counter_video    = load_video(counter_video_path, use_cache=True)
-target_tracks    = as_numpy_array(_omni_load(target_tracks_path))
-counter_tracks   = as_numpy_array(_omni_load(counter_tracks_path))
-target_visibles  = as_numpy_array(_omni_load(target_visibles_path))
-counter_visibles = as_numpy_array(_omni_load(counter_visibles_path))
+target_video     = rp.load_video(target_video_path,  use_cache=True)
+counter_video    = rp.load_video(counter_video_path, use_cache=True)
+target_tracks    = rp.as_numpy_array(_omni_load(target_tracks_path))
+counter_tracks   = rp.as_numpy_array(_omni_load(counter_tracks_path))
+target_visibles  = rp.as_numpy_array(_omni_load(target_visibles_path))
+counter_visibles = rp.as_numpy_array(_omni_load(counter_visibles_path))
 
 target_tracks    = target_tracks   [:, indices]
 counter_tracks   = counter_tracks  [:, indices]
 target_visibles  = target_visibles [:, indices]
 counter_visibles = counter_visibles[:, indices]
 
-N, T, H, W = validate_tensor_shapes(
+N, T, H, W = rp.validate_tensor_shapes(
     counter_video    = "numpy: T H W RGB",
     target_video     = "numpy: T H W RGB",
     counter_tracks   = "numpy: T N XY",
@@ -40,13 +41,13 @@ N, T, H, W = validate_tensor_shapes(
 )
 
 colors = [
-    (*hsv_to_rgb_float_color(h, 0.5, 1), .5)
-    for h in np.linspace(0, 1, num=N, endpoint=False)
+    (*rp.hsv_to_rgb_float_color(h, 0.5, 1), .5)
+    for h in rp.np.linspace(0, 1, num=N, endpoint=False)
 ]
 # display_image(tiled_images(uniform_float_color_image(256,256,color) for color in colors))
 
 circles = [
-    with_drop_shadow(
+    rp.with_drop_shadow(
         labeled_circle(
             text=str(n + 1),
             color=color,
@@ -61,7 +62,7 @@ circles = [
     )
     for n,color in enumerate(colors)
 ]
-circles=cv_resize_images(circles,size=.75)
+circles=rp.cv_resize_images(circles,size=.75)
 #display_alpha_image(blend_images('dark translucent blue',tiled_images(circles)))
 
 def circles_layer(tracks, visibles, frame_number, track_numbers=None):
@@ -73,21 +74,21 @@ def circles_layer(tracks, visibles, frame_number, track_numbers=None):
     """
 
     if track_numbers is None: track_numbers=range(N)
-    layer = uniform_byte_color_image(H, W)
+    layer = rp.uniform_byte_color_image(H, W)
     
     for n in track_numbers:
         circle=circles[n]
         x,y=tracks[frame_number,n]
         v=visibles[frame_number,n]
         if v:
-            layer = skia_stamp_image(layer,circle,offset=[x,y], sprite_origin=[.5,.5],copy=False)
+            layer = rp.skia_stamp_image(layer,circle,offset=[x,y], sprite_origin=[.5,.5],copy=False)
                 
     return layer
 
 def trails_layer(tracks, visibles, frame_number, track_numbers=None):
 
     if track_numbers is None: track_numbers=range(N)
-    layer = uniform_byte_color_image(H, W)
+    layer = rp.uniform_byte_color_image(H, W)
     
     if frame_number>0:
 
@@ -121,19 +122,19 @@ def trails_layer(tracks, visibles, frame_number, track_numbers=None):
                 close=False,
             )
             
-    layer=with_drop_shadow(layer,color='black',blur=10)
+    layer=rp.with_drop_shadow(layer,color='black',blur=10)
 
     return layer
 
 def arrows_layer(src_tracks,src_visibles,dst_tracks,dst_visibles,frame_number,track_numbers=None,circle_radius=12):
     if track_numbers is None: track_numbers=range(N)
-    layer = uniform_byte_color_image(H, W)
+    layer = rp.uniform_byte_color_image(H, W)
     
     for n in track_numbers:
         color=colors[n]
         
-        color_b = with_color_brightness(color,.8)
-        color_b = with_color_saturation(color,.8)
+        color_b = rp.with_color_brightness(color,.8)
+        color_b = rp.with_color_saturation(color,.8)
 
         src_v = src_visibles[frame_number,n]
         dst_v = dst_visibles[frame_number,n]
@@ -141,7 +142,7 @@ def arrows_layer(src_tracks,src_visibles,dst_tracks,dst_visibles,frame_number,tr
         dst_xy = dst_tracks[frame_number,n]
         
         delta = dst_xy - src_xy
-        delta_mag = magnitude(delta)
+        delta_mag = rp.magnitude(delta)
         delta_norm = delta / delta_mag
         
         src_xy += delta_norm * circle_radius
@@ -168,13 +169,13 @@ def arrows_layer(src_tracks,src_visibles,dst_tracks,dst_visibles,frame_number,tr
     return layer
 
 def srgb_blend(x,y,a):
-    x = srgb_to_linear(x)
-    y = srgb_to_linear(y)
-    z = blend_images(x, y, a)
-    z = linear_to_srgb(z)
+    x = rp.srgb_to_linear(x)
+    y = rp.srgb_to_linear(y)
+    z = rp.blend_images(x, y, a)
+    z = rp.linear_to_srgb(z)
     return z
 
-def blended_video_layer(alpha, frame_number):
+def blended_video_layer(frame_number, alpha):
     return srgb_blend(target_video[frame_number], counter_video[frame_number], alpha)
 
 # tracks=target_tracks
@@ -207,23 +208,23 @@ def final_frame(
     blended_trails_alpha,
     track_numbers=None,
 ):
-    blended_tracks = blend(counter_tracks, target_tracks, track_alpha)
+    blended_tracks = rp.blend(counter_tracks, target_tracks, track_alpha)
     visibles = counter_visibles & target_visibles
 
     blended_frame = blended_video_layer(frame_number, video_alpha)
 
-    circles_layer = circles_layer(blended_tracks, visibles, frame_number, track_numbers)
-    arrows_layer = circles_layer(counter_tracks, counter_visibles, blended_tracks, target_visibles, frame_number, track_numbers)
+    circles_layer_result = circles_layer(blended_tracks, visibles, frame_number, track_numbers)
+    arrows_layer_result = arrows_layer(counter_tracks, counter_visibles, target_tracks, target_visibles, frame_number, track_numbers)
     target_trails_layer  = trails_layer(target_tracks , target_visibles , frame_number)
     counter_trails_layer = trails_layer(counter_tracks, counter_visibles, frame_number)
-    blended_trails_layer = trails_layer(blended_tracks, counter_visibles, frame_number)
+    blended_trails_layer = trails_layer(blended_tracks, visibles, frame_number)
 
     output = blended_frame
-    output = srgb_blend(output, target_trails_layer , alpha=target_trails_alpha )
-    output = srgb_blend(output, blended_trails_layer, alpha=blended_trails_alpha)
-    output = srgb_blend(output, counter_trails_layer, alpha=counter_trails_alpha)
-    output = srgb_blend(output, arrows_layer, alpha=arrows_alpha)
-    output = srgb_blend(output, circles_layer, alpha=circles_alpha)
+    output = srgb_blend(output, target_trails_layer, target_trails_alpha)
+    output = srgb_blend(output, blended_trails_layer, blended_trails_alpha)
+    output = srgb_blend(output, counter_trails_layer, counter_trails_alpha)
+    output = srgb_blend(output, arrows_layer_result, arrows_alpha)
+    output = srgb_blend(output, circles_layer_result, circles_alpha)
 
     return output
 
