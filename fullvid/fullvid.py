@@ -145,8 +145,8 @@ def arrows_layer(src_tracks,src_visibles,dst_tracks,dst_visibles,frame_number,tr
         delta_mag = rp.magnitude(delta)
         delta_norm = delta / delta_mag
         
-        src_xy += delta_norm * circle_radius
-        dst_xy -= delta_norm * circle_radius
+        src_xy = src_xy + delta_norm * circle_radius
+        dst_xy = dst_xy - delta_norm * circle_radius
         
         v = src_v and dst_v and delta_mag > 2 * circle_radius
         dst_x, dst_y = dst_xy
@@ -198,14 +198,14 @@ def blended_video_layer(frame_number, alpha):
 
 
 def final_frame(
-    frame_number,
-    video_alpha,
-    track_alpha,
-    circles_alpha,
-    arrows_alpha,
-    target_trails_alpha,
-    counter_trails_alpha,
-    blended_trails_alpha,
+    frame_number=25,
+    video_alpha=.5,
+    track_alpha=1,
+    circles_alpha=1,
+    arrows_alpha=1,
+    target_trails_alpha=1,
+    counter_trails_alpha=1,
+    blended_trails_alpha=1,
     track_numbers=None,
 ):
     blended_tracks = rp.blend(counter_tracks, target_tracks, track_alpha)
@@ -213,18 +213,22 @@ def final_frame(
 
     blended_frame = blended_video_layer(frame_number, video_alpha)
 
-    circles_layer_result = circles_layer(blended_tracks, visibles, frame_number, track_numbers)
-    arrows_layer_result = arrows_layer(counter_tracks, counter_visibles, target_tracks, target_visibles, frame_number, track_numbers)
+    circles_layer_out = circles_layer(blended_tracks, visibles, frame_number, track_numbers)
+    arrows_layer_out = arrows_layer(counter_tracks, counter_visibles, blended_tracks, target_visibles, frame_number, track_numbers)
     target_trails_layer  = trails_layer(target_tracks , target_visibles , frame_number)
     counter_trails_layer = trails_layer(counter_tracks, counter_visibles, frame_number)
-    blended_trails_layer = trails_layer(blended_tracks, visibles, frame_number)
+    blended_trails_layer = trails_layer(blended_tracks, counter_visibles, frame_number)
 
     output = blended_frame
-    output = srgb_blend(output, target_trails_layer, target_trails_alpha)
-    output = srgb_blend(output, blended_trails_layer, blended_trails_alpha)
-    output = srgb_blend(output, counter_trails_layer, counter_trails_alpha)
-    output = srgb_blend(output, arrows_layer_result, arrows_alpha)
-    output = srgb_blend(output, circles_layer_result, circles_alpha)
+    
+    def imblend(x,y,a):return srgb_blend(x,y,a)
+    def imblend(x,y,a):return rp.skia_stamp_image(x,y,alpha=a)
+
+    output = imblend(output, target_trails_layer , target_trails_alpha )
+    output = imblend(output, blended_trails_layer, blended_trails_alpha)
+    output = imblend(output, counter_trails_layer, counter_trails_alpha)
+    output = imblend(output, arrows_layer_out, arrows_alpha)
+    output = imblend(output, circles_layer_out,circles_alpha)
 
     return output
 
