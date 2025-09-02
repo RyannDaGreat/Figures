@@ -41,7 +41,7 @@ N, T, H, W = rp.validate_tensor_shapes(
 )
 
 colors = [
-    (*rp.hsv_to_rgb_float_color(h, 0.5, 1), .5)
+    (*rp.hsv_to_rgb_float_color(h, 0.5, 1), 1)
     for h in rp.np.linspace(0, 1, num=N, endpoint=False)
 ]
 # display_image(tiled_images(uniform_float_color_image(256,256,color) for color in colors))
@@ -145,7 +145,7 @@ def arrows_layer(src_tracks,src_visibles,dst_tracks,dst_visibles,frame_number,tr
         delta_mag = rp.magnitude(delta)
         delta_norm = delta / delta_mag
         
-        src_xy = src_xy + delta_norm * circle_radius
+        # src_xy = src_xy + delta_norm * circle_radius
         dst_xy = dst_xy - delta_norm * circle_radius
         
         v = src_v and dst_v and delta_mag > 2 * circle_radius
@@ -165,6 +165,9 @@ def arrows_layer(src_tracks,src_visibles,dst_tracks,dst_visibles,frame_number,tr
                 stroke_color=color,
                 stroke_join="round",
             )
+
+
+    layer=rp.with_drop_shadow(layer,color='black',blur=20)
         
     return layer
 
@@ -208,6 +211,9 @@ def final_frame(
     blended_trails_alpha=1,
     track_numbers=None,
 ):
+
+    video_alpha = 1-track_alpha
+
     blended_tracks = rp.blend(counter_tracks, target_tracks, track_alpha)
     visibles = counter_visibles & target_visibles
 
@@ -215,9 +221,9 @@ def final_frame(
 
     circles_layer_out = circles_layer(blended_tracks, visibles, frame_number, track_numbers)
     arrows_layer_out = arrows_layer(counter_tracks, counter_visibles, blended_tracks, target_visibles, frame_number, track_numbers)
-    target_trails_layer  = trails_layer(target_tracks , target_visibles , frame_number)
-    counter_trails_layer = trails_layer(counter_tracks, counter_visibles, frame_number)
-    blended_trails_layer = trails_layer(blended_tracks, counter_visibles, frame_number)
+    target_trails_layer  = trails_layer(target_tracks , target_visibles , frame_number, track_numbers)
+    counter_trails_layer = trails_layer(counter_tracks, counter_visibles, frame_number, track_numbers)
+    blended_trails_layer = trails_layer(blended_tracks, counter_visibles, frame_number, track_numbers)
 
     output = blended_frame
     
@@ -227,8 +233,8 @@ def final_frame(
     output = imblend(output, target_trails_layer , target_trails_alpha )
     output = imblend(output, blended_trails_layer, blended_trails_alpha)
     output = imblend(output, counter_trails_layer, counter_trails_alpha)
-    output = imblend(output, arrows_layer_out, arrows_alpha)
     output = imblend(output, circles_layer_out,circles_alpha)
+    output = imblend(output, arrows_layer_out, arrows_alpha)
 
     return output
 

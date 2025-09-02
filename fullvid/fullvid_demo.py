@@ -41,7 +41,7 @@ def _(mo):
     final_frame = fullvid.final_frame
 
     mo.md(f"**Data loaded**: {T} frames, {N} tracks, {H}x{W} resolution")
-    return T, final_frame
+    return N, T, final_frame
 
 
 @app.cell
@@ -56,8 +56,13 @@ def _(
     mo,
     target_trails_alpha_slider,
     track_alpha_slider,
+    track_checkboxes,
     video_alpha_slider,
 ):
+    # Get selected track indices from checkboxes
+    selected_tracks = [i for i, checkbox in enumerate(track_checkboxes) if checkbox.value]
+    track_numbers = selected_tracks if selected_tracks else None
+    
     result = final_frame(
         frame_number=frame_number_slider.value,
         video_alpha=video_alpha_slider.value,
@@ -67,6 +72,7 @@ def _(
         target_trails_alpha=target_trails_alpha_slider.value,
         counter_trails_alpha=counter_trails_alpha_slider.value,
         blended_trails_alpha=blended_trails_alpha_slider.value,
+        track_numbers=track_numbers,
     )
 
     mo.vstack([
@@ -80,6 +86,8 @@ def _(
             target_trails_alpha_slider,
             counter_trails_alpha_slider,
             blended_trails_alpha_slider,
+            mo.md("**Track Selection:**"),
+            mo.hstack(track_checkboxes),
         ]),
         mo.md(f"""
         **final_frame({frame_number_slider.value}, {video_alpha_slider.value:.2f}, {track_alpha_slider.value:.2f}, {circles_alpha_slider.value:.2f}, {arrows_alpha_slider.value:.2f}, {target_trails_alpha_slider.value:.2f}, {counter_trails_alpha_slider.value:.2f}, {blended_trails_alpha_slider.value:.2f})**
@@ -166,6 +174,18 @@ def _(mo):
         label="blended_trails_alpha:", include_input=True
     )
     return (blended_trails_alpha_slider,)
+
+
+@app.cell
+def _(N, mo):
+    # Track selection checkboxes - one for each track
+    track_checkboxes = [
+        mo.ui.checkbox(value=True, label=str(i+1))
+        for i in range(N)
+    ]
+    return (track_checkboxes,)
+
+
 
 
 if __name__ == "__main__":
