@@ -406,6 +406,10 @@ def _arrow_contours(x0,y0,x1,y1,tip_width=15,tip_height=15,tip_dimple=5, end_wid
     return gather_vars('tip stem full')
 
 def skia_draw_arrow(image, x0, y0, x1, y1, tip_width=15, tip_height=15, tip_dimple=5, end_width=5, start_width=3, color='black', **skia_kwargs):
+
+    if x0==x1 and y0==y1:
+        return image
+
     arrow = gather_args_call(_arrow_contours)
     
     skia_kwargs = dict(fill='translucent blue',shadow_opacity=1,shadow_color=(0,0,0,1),shadow_blur=2,stroke_width=1,
