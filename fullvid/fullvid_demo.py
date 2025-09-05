@@ -195,8 +195,11 @@ def _(np, rp):
 
 
 @app.cell
-def _(T, final_frame, mo, np, rp, sliders, track_numbers):
+def _(final_frame, np, rp, sliders, track_numbers):
     def tween_segment(start, stop, num:int):
+        if not (isinstance(start, float) and isinstance(stop, float)):
+            return [stop]*num
+    
         return np.linspace(stop, start, num, endpoint=False)[::-1]
 
     def tween_to(duration:int, end_states:dict):
@@ -215,9 +218,9 @@ def _(T, final_frame, mo, np, rp, sliders, track_numbers):
             new_state = {**start_state} | delta
             timeline.append(new_state)
 
-    def render_state(frame_number, **state):
+    def render_state(frame_number, track_numbers, **state):
         frame_number = int(frame_number)
-        return final_frame(frame_number=frame_number,**state,)
+        return final_frame(frame_number=frame_number,track_numbers=track_numbers,**state,)
 
     def render_video():
         video = (render_state(**state) for state in timeline)
@@ -234,21 +237,7 @@ def _(T, final_frame, mo, np, rp, sliders, track_numbers):
         initial_state
     ]
 
-    # Create separate slider dictionaries for each timeline state
-    timeline_state_sliders = [
-        mo.ui.dictionary({
-            "frame_number": mo.ui.slider(start=0, stop=T-1, value=i*10, step=1, label=f"State {i+1} frame_number:", include_input=True),
-            "video_alpha": mo.ui.slider(start=0.0, stop=1.0, value=0.5, step=0.01, label=f"State {i+1} video_alpha:", include_input=True),
-            "track_alpha": mo.ui.slider(start=0.0, stop=1.0, value=0.5, step=0.01, label=f"State {i+1} track_alpha:", include_input=True),
-            "circles_alpha": mo.ui.slider(start=0.0, stop=1.0, value=1.0, step=0.01, label=f"State {i+1} circles_alpha:", include_input=True),
-            "arrows_alpha": mo.ui.slider(start=0.0, stop=1.0, value=1.0, step=0.01, label=f"State {i+1} arrows_alpha:", include_input=True),
-            "target_trails_alpha": mo.ui.slider(start=0.0, stop=1.0, value=0.8, step=0.01, label=f"State {i+1} target_trails_alpha:", include_input=True),
-            "counter_trails_alpha": mo.ui.slider(start=0.0, stop=1.0, value=0.8, step=0.01, label=f"State {i+1} counter_trails_alpha:", include_input=True),
-            "blended_trails_alpha": mo.ui.slider(start=0.0, stop=1.0, value=0.6, step=0.01, label=f"State {i+1} blended_trails_alpha:", include_input=True),
-        }) for i in range(3)
-    ]
-
-    return render_video, timeline_state_sliders, tween_to
+    return initial_state, render_video, timeline, tween_to
 
 
 @app.cell
@@ -277,6 +266,45 @@ def _(render_video, rp, timeline_state_sliders, track_numbers, tween_to):
         tween_to(30, state)
 
     rp.display_video(list(rp.eta(render_video(),'Rendering')),loop=True)
+    return (timeline_states,)
+
+
+@app.cell
+def _(track_numbers):
+    track_numbers
+    return
+
+
+@app.cell
+def _(initial_state):
+    initial_state
+    return
+
+
+@app.cell
+def _(timeline_states):
+    timeline_states[33]
+    return
+
+
+@app.cell
+def _(timeline):
+    timeline[23]
+    return
+
+
+@app.cell
+def _():
+    return
+
+
+@app.cell
+def _():
+    return
+
+
+@app.cell
+def _():
     return
 
 
