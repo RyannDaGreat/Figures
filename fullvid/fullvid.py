@@ -7,6 +7,12 @@ edit_path = "/Users/ryan/CleanCode/Projects/Google2025_Paper/inferblobs_edit_res
 edit_path = "/Users/ryan/CleanCode/Projects/Google2025_Paper/inferblobs_edit_results/[Seed 6303] Sora Basketball_ The ball goes into the hoop_copy1" ; indices = [3, 5]
 edit_path = "/Users/ryan/CleanCode/Projects/Google2025_Paper/inferblobs_edit_results/[Seed 1515] Blacks Freeze Camera_copy2" ; indices = slice(None)
 
+hand_icon_path = "https://github.com/RyannDaGreat/MacCursors/blob/main/src/png/handopen%402x.png?raw=True"
+grab_icon_path = "https://github.com/RyannDaGreat/MacCursors/blob/main/src/png/handgrabbing@2x.png?raw=true"
+
+hand_icon = rp.load_image(hand_icon_path, use_cache=True)
+grab_icon = rp.load_image(grab_icon_path, use_cache=True)
+
 counter_video_path    = rp.path_join(edit_path, "counter_video.mp4")
 target_video_path     = rp.path_join(edit_path, "output_video.mp4")
 counter_tracks_path   = rp.path_join(edit_path, "counter_tracks.pth")
@@ -161,8 +167,8 @@ def arrows_layer(src_tracks,src_visibles,dst_tracks,dst_visibles,frame_number,tr
                 dst_x,
                 dst_y,
                 copy=False,
-                fill=color_b,
-                stroke_color=color,
+                fill=color,
+                stroke_color=color_b,
                 stroke_join="round",
             )
 
