@@ -167,14 +167,23 @@ def _(N, T, mo, rp, tween):
 
     chat_collapse = tween(20,  chat_width=  0)
     chat_fadeout = tween(20, chat_alpha = .0)
-    chat_intro  = tween(20, chat_width=1000, chat_alpha =.75, chat_text = "Motion Edit: Move the Camera")
+    chat_intro  = tween(20, chat_width=1000, chat_alpha =.75, chat_text = "Video Motion Edit")
     chat_step1  = tween(20, chat_width=1000, chat_alpha =.75, chat_text = "Step 1: Add Tracking Points")
     chat_step2  = tween(20, chat_width=1000, chat_alpha =.75, chat_text = "Step 2: Edit Trajectories")
     chat_manytraj  = tween(20, chat_width=1000, chat_alpha =.75, chat_text = "Edit Many Points")
 
     enable_counter_trails = tween(1, counter_trails_alpha=1)
 
-    reveal_tracks = tween(track_numbers=[0]) >> tween(5) >> tween(track_numbers=[0, 1]) >> tween(track_numbers=[0, 1, 2])
+    chosen_numbers = [3, 5]
+
+    reveal_tracks = (
+           tween(track_numbers=chosen_numbers[:1])
+        >> tween(5)
+        >> tween(track_numbers=chosen_numbers[:2])
+        >> tween(5)
+        >> tween(track_numbers=chosen_numbers[:3])
+    )
+
 
     default_frame_number = 394#Hack because the slider doesnt persist
 
@@ -239,7 +248,7 @@ def _(N, T, mo, rp, tween):
         >> play_video + tween(track_alpha=0) + status_input + ( chat_manytraj >> tween(track_numbers = range(N)) >> tween(20, circles_alpha=1))
         >> play_video + ( tween(20) + tween(20, counter_trails_alpha=1)) 
 
-    
+
         >> tween(hand_grabbing=False, hand_size=1, arrows_alpha=1)
         >> (tween(30, frame_number=30, ease='quad_out') >> tween(30, frame_number=0, ease='cubic')) + (
             tween(60)
@@ -256,10 +265,10 @@ def _(N, T, mo, rp, tween):
             >> play_video
             >> play_video + tween(T-1, circles_alpha = 0)
         )
-    
-    
 
-    
+
+
+
 
         # >> play_video + 
         # >> tween(T - 1, frame_number=T - 1) + tween(T - 1, circles_alpha=1)
@@ -381,16 +390,6 @@ def _(
         video_path = rp.save_video_mp4(video)
         rp.open_file_with_default_application(video_path)
     video_path
-    return
-
-
-@app.cell
-def _():
-    return
-
-
-@app.cell
-def _():
     return
 
 

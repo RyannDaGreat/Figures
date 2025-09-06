@@ -7,9 +7,10 @@ from rp.git.Figures.arrow.arrow import (
     skia_draw_arrow,
 )
 
-edit_path = "/Users/ryan/CleanCode/Projects/Google2025_Paper/inferblobs_edit_results/[Seed 5176] Judge_ Walk Out_copy2"
-edit_path = "/Users/ryan/CleanCode/Projects/Google2025_Paper/inferblobs_edit_results/[Seed 6303] Sora Basketball_ The ball goes into the hoop_copy1" ; indices = [3, 5]
-edit_path = "/Users/ryan/CleanCode/Projects/Google2025_Paper/inferblobs_edit_results/[Seed 1515] Blacks Freeze Camera_copy2" ; indices = slice(None)
+# edit_path = "/Users/ryan/CleanCode/Projects/Google2025_Paper/inferblobs_edit_results/[Seed 5176] Judge_ Walk Out_copy2" ; indices=slice(None)
+# edit_path = "/Users/ryan/CleanCode/Projects/Google2025_Paper/inferblobs_edit_results/[Seed 9995] Bichon + Corgi _ Corgi Stay Behind" ; indices=slice(None)
+edit_path = "/Users/ryan/CleanCode/Projects/Google2025_Paper/inferblobs_edit_results/[Seed 6303] Sora Basketball_ The ball goes into the hoop_copy1" ; indices = slice(None) ; #indices = [3, 5]
+# edit_path = "/Users/ryan/CleanCode/Projects/Google2025_Paper/inferblobs_edit_results/[Seed 1515] Blacks Freeze Camera_copy2" ; indices = slice(None)
 
 hand_icon_path = "https://github.com/RyannDaGreat/MacCursors/blob/main/src/png/handopen%402x.png?raw=True"
 grab_icon_path = "https://github.com/RyannDaGreat/MacCursors/blob/main/src/png/handgrabbing@2x.png?raw=true"
@@ -75,6 +76,9 @@ circles = [
 circles=rp.cv_resize_images(circles,size=.75)
 #display_alpha_image(blend_images('dark translucent blue',tiled_images(circles)))
 
+def contig(x):
+    return rp.as_rgba_image(rp.as_byte_image(x,copy=False),copy=False)
+
 @rp.memoized_lru
 def get_circles_layer(tracks, visibles, frame_number, track_numbers=None):
     """
@@ -94,7 +98,7 @@ def get_circles_layer(tracks, visibles, frame_number, track_numbers=None):
         if v:
             layer = rp.skia_stamp_image(layer,circle,offset=[x,y], sprite_origin=[.5,.5],copy=False)
                 
-    return layer
+    return contig(layer)
 
 @rp.memoized_lru
 def get_hand_layer(tracks, visibles, frame_number, grabbing=False, dx=0, dy=0, hand_size=1.0, track_numbers=None):
@@ -116,7 +120,7 @@ def get_hand_layer(tracks, visibles, frame_number, grabbing=False, dx=0, dy=0, h
         if v:
             layer = rp.skia_stamp_image(layer,hand,offset=[x+dx,y+dy], sprite_origin=[.5,.5],copy=False)
                 
-    return layer
+    return contig(layer)
 
 @rp.memoized_lru
 def get_trails_layer(tracks, visibles, frame_number, track_numbers=None):
@@ -158,7 +162,7 @@ def get_trails_layer(tracks, visibles, frame_number, track_numbers=None):
             
     layer=rp.with_drop_shadow(layer,color='black',blur=10)
 
-    return layer
+    return contig(layer)
 
 @rp.memoized_lru
 def get_arrows_layer(src_tracks,src_visibles,dst_tracks,dst_visibles,frame_number,track_numbers=None,circle_radius=12):
@@ -204,7 +208,7 @@ def get_arrows_layer(src_tracks,src_visibles,dst_tracks,dst_visibles,frame_numbe
 
     layer=rp.with_drop_shadow(layer,color='black',blur=20)
         
-    return layer
+    return contig(layer)
 
 @rp.memoized_lru
 def get_status_layer(text, color='translucent green', width=200, offset=20, x_shift=0):
@@ -216,7 +220,7 @@ def get_status_layer(text, color='translucent green', width=200, offset=20, x_sh
     label_image = rp.cv_resize_image(label_image,.5,alpha_weighted=True)
     label_image = rp.bordered_image_solid_color(label_image, thickness=round(offset), color='transparent')
     label_image = rp.shift_image(label_image, x=x_shift)
-    return label_image
+    return contig(label_image)
 
 @rp.memoized_lru
 def get_chat_layer(text='Hello World', background_color='black', rim_color='gray', text_color='white', width=400, height=60, font_size=24, y_offset=-20):
@@ -231,7 +235,7 @@ def get_chat_layer(text='Hello World', background_color='black', rim_color='gray
     layer = rp.uniform_byte_color_image(H, W)
     layer = rp.skia_stamp_image(layer, chat_image, offset=[0, y_offset], sprite_origin=(.5, 1), canvas_origin=(.5, 1), copy=False)
     
-    return layer
+    return contig(layer)
 
 def srgb_blend(x,y,a):
     x = rp.srgb_to_linear(x)
@@ -294,7 +298,7 @@ def final_frame(
     output = blended_frame
     
     def imblend(x,y,a):return srgb_blend(x,y,a)
-    # def imblend(x,y,a):return rp.skia_stamp_image(x,y,alpha=a)
+    def imblend(x,y,a):return rp.skia_stamp_image(x,y,alpha=a)
 
     output = imblend(output, target_trails_layer , target_trails_alpha )
     output = imblend(output, blended_trails_layer, blended_trails_alpha)
