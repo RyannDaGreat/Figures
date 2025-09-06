@@ -97,6 +97,27 @@ def get_circles_layer(tracks, visibles, frame_number, track_numbers=None):
     return layer
 
 @rp.memoized_lru
+def get_hand_layer(tracks, visibles, frame_number, grabbing=False, dx=0, dy=0, track_numbers=None):
+    """
+    EXAMPLE:
+        >>> f=[get_circles_layer(target_tracks,target_visibles,t) for t in eta(range(T))]
+        >>> q=skia_stamp_video(target_video,f)
+        >>> display_video(q)
+    """
+
+    if track_numbers is None: track_numbers=range(N)
+    layer = rp.uniform_byte_color_image(H, W)
+    
+    for n in track_numbers:
+        x,y=tracks[frame_number,n]
+        v=visibles[frame_number,n]
+        hand = grab_icon if grabbing else hand_icon
+        if v:
+            layer = rp.skia_stamp_image(layer,hand,offset=[x+dx,y+dy], sprite_origin=[.5,.5],copy=False)
+                
+    return layer
+
+@rp.memoized_lru
 def get_trails_layer(tracks, visibles, frame_number, track_numbers=None):
 
     if track_numbers is None: track_numbers=range(N)
