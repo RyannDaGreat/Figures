@@ -149,14 +149,7 @@ def _(T, final_frame, rp, tween):
 
 
 @app.cell
-def _(
-    controls,
-    get_frame,
-    mo,
-    preview_frame_slider,
-    render_video_button,
-    timeline,
-):
+def _(get_frame, mo, preview_frame_slider, render_video_button, timeline):
     frame_number = preview_frame_slider.value
     state = timeline[preview_frame_slider.value]
     frame = get_frame(frame_number)
@@ -168,10 +161,6 @@ def _(
             render_video_button,
         ],
     )
-
-    for arg_name, control in controls.items():
-        if arg_name in state:
-            control.value = state
     return
 
 
