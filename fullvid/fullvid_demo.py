@@ -138,7 +138,7 @@ def _(N, T, mo):
 
 
 @app.cell
-def _(T, mo, rp, tween):
+def _(N, T, mo, rp, tween):
     # Animation Definition
 
     play_video_no_end = tween(T - 1, frame_number=T - 1)
@@ -170,6 +170,7 @@ def _(T, mo, rp, tween):
     chat_intro  = tween(20, chat_width=1000, chat_alpha =.75, chat_text = "Motion Edit: Move the Camera")
     chat_step1  = tween(20, chat_width=1000, chat_alpha =.75, chat_text = "Step 1: Add Tracking Points")
     chat_step2  = tween(20, chat_width=1000, chat_alpha =.75, chat_text = "Step 2: Edit Trajectories")
+    chat_manytraj  = tween(20, chat_width=1000, chat_alpha =.75, chat_text = "Edit Many Points")
 
     enable_counter_trails = tween(1, counter_trails_alpha=1)
 
@@ -223,16 +224,40 @@ def _(T, mo, rp, tween):
         )
         >> play_video + chat_fadeout + enable_counter_trails
         >> play_video
-        >> play_video + (
-            chat_step2
+        >> (tween(30, frame_number=30, ease='quad_out') >> tween(30, frame_number=0, ease='cubic')) + (
+            tween(60)
+            >> chat_step2
             >> tween(20, hand_dy=10, hand_dx=0, hand_size=1, hand_alpha=1.0, ease='cubic')
             >> tween(hand_grabbing=True)
         )
         >> tween(30, target_trails_alpha = 1., track_alpha = 1.)
-        >> play_video * 2 + tween(T * 2, **status_output_state, ease='cubic') + (tween(T) >> tween(T, status_text = status_output_str, counter_trails_alpha=0, arrows_alpha=0, hand_alpha=0, hand_size=.5, ease='cubic'))
+        >> play_video * 2 + tween(T * 2, **status_output_state, ease='cubic') + 
+        (tween(T) >> tween(T, status_text = status_output_str, counter_trails_alpha=0, arrows_alpha=0, hand_alpha=0, hand_size=.5, ease='cubic'))
         >> play_video
         >> play_video + tween(20, circles_alpha = 0, target_trails_alpha=0, chat_alpha=0, ease='cubic')
-        >> play_video + status_input
+
+        >> play_video + tween(track_alpha=0) + status_input + ( chat_manytraj >> tween(track_numbers = range(N)) >> tween(20, circles_alpha=1))
+        >> play_video + ( tween(20) + tween(20, counter_trails_alpha=1)) 
+
+    
+        >> tween(hand_grabbing=False, hand_size=1, arrows_alpha=1)
+        >> (tween(30, frame_number=30, ease='quad_out') >> tween(30, frame_number=0, ease='cubic')) + (
+            tween(60)
+            # >> chat_step2
+            >> tween(20, hand_dy=10, hand_dx=0, hand_size=1, hand_alpha=1.0, ease='cubic')
+            >> tween(hand_grabbing=True)
+        )
+        >> tween(30, target_trails_alpha = 1., track_alpha = 1.) + (tween(30) >> play_video)
+        >> (tween(T*2) >> tween(T*2, video_alpha=1))+ (
+               play_video
+            >> play_video + tween(T, blended_trails_alpha = 0, counter_trails_alpha = 0, target_trails_alpha = 0, arrows_alpha = 0, hand_alpha = 0)
+            >> play_video
+            >> play_video
+            >> play_video + tween(T // 2, circles_alpha = 0)
+        )
+    
+    
+
     
 
         # >> play_video + 
@@ -252,7 +277,15 @@ def _(T, mo, rp, tween):
 
 
 @app.cell
-def _(get_frame, mo, preview_frame_slider, render_video_button, timeline):
+def _(
+    get_frame,
+    mo,
+    preview_frame_slider,
+    render_end_slider,
+    render_start_slider,
+    render_video_button,
+    timeline,
+):
     frame_number = preview_frame_slider.value
     state = timeline[preview_frame_slider.value]
     frame = get_frame(frame_number)
@@ -262,6 +295,8 @@ def _(get_frame, mo, preview_frame_slider, render_video_button, timeline):
             mo.image(frame, width=720),
             preview_frame_slider,
             render_video_button,
+            render_start_slider,
+            render_end_slider,
         ],
     )
     return
@@ -275,10 +310,12 @@ def _(final_frame, rp, timeline):
         return frame
 
 
-    def get_video():
-        for state in rp.eta(timeline, "Rendering"):
-            frame = final_frame(**state)
-            yield frame
+    def get_video(render_start=None, render_end=None):
+        for frame_number in rp.eta(range(render_start, render_end),  "Rendering"):
+            yield get_frame(frame_number)
+        # for state in rp.eta(timeline, "Rendering"):
+        #     frame = final_frame(**state)
+        #     yield frame
     return get_frame, get_video
 
 
@@ -295,15 +332,51 @@ def _(default_frame_number, mo, timeline):
         full_width=True,
     )
 
+    render_start_slider = mo.ui.slider(
+        start=0,
+        stop=len(timeline) - 1,
+        value=0,
+        step=1,
+        label="Render Start:",
+        include_input=True,
+        debounce=False,
+        full_width=True,
+    )
+
+
+    render_end_slider = mo.ui.slider(
+        start=0,
+        stop=len(timeline),
+        value=len(timeline),
+        step=1,
+        label="Render End:",
+        include_input=True,
+        debounce=False,
+        full_width=True,
+    )
+
     render_video_button = mo.ui.run_button(label="Render Video")
-    return preview_frame_slider, render_video_button
+    return (
+        preview_frame_slider,
+        render_end_slider,
+        render_start_slider,
+        render_video_button,
+    )
 
 
 @app.cell
-def _(get_video, render_video_button, rp):
+def _(
+    get_video,
+    render_end_slider,
+    render_start_slider,
+    render_video_button,
+    rp,
+):
     video_path = None
     if render_video_button.value:
-        video = get_video()
+        render_start = render_start_slider.value
+        render_end = render_end_slider.value
+        video = get_video(render_start, render_end)
         video_path = rp.save_video_mp4(video)
         rp.open_file_with_default_application(video_path)
     video_path
