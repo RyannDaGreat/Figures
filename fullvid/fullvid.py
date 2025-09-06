@@ -186,7 +186,7 @@ def get_arrows_layer(src_tracks,src_visibles,dst_tracks,dst_visibles,frame_numbe
 
 @rp.memoized_lru
 def get_status_layer(text, color='translucent green', width=200, offset=20):
-    background = rp.uniform_byte_color_image(height=60,width=width,color='blue')
+    background = rp.uniform_byte_color_image(height=60,width=width,color=color)
     background = rp.with_corner_radius(background, 40, antialias=False)
     background = rp.with_alpha_outline(background, inner_radius=10, color=' translucent white ')
     text_image = rp.skia_text_to_image(text, font="Futura", size=50, color='white')

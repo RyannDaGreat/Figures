@@ -13,7 +13,7 @@ def _():
     from rp.libs.tweenline import tween
 
     from fullvid import final_frame, N, T, H, W
-    return T, final_frame, mo, rp, tween
+    return N, T, final_frame, mo, rp, tween
 
 
 @app.cell
@@ -23,7 +23,7 @@ def _(mo, result):
 
 
 @app.cell
-def _(final_frame, mo, sliders, track_checkboxes):
+def _(controls, final_frame, mo, track_checkboxes):
     # Get selected track indices from checkboxes
     selected_tracks = [
         i for i, checkbox in enumerate(track_checkboxes) if checkbox.value
@@ -31,7 +31,7 @@ def _(final_frame, mo, sliders, track_checkboxes):
     track_numbers = selected_tracks if selected_tracks else None
 
     result = final_frame(
-        **{arg_name: slider.value for arg_name, slider in sliders.items()},
+        **{arg_name: control.value for arg_name, control in controls.items()},
         track_numbers=track_numbers,
     )
 
@@ -39,7 +39,7 @@ def _(final_frame, mo, sliders, track_checkboxes):
         [
             mo.vstack(
                 [
-                    *sliders.values(),
+                    *controls.values(),
                     mo.md("**Track Selection:**"),
                     mo.hstack(track_checkboxes),
                 ]
@@ -49,19 +49,24 @@ def _(final_frame, mo, sliders, track_checkboxes):
     return (result,)
 
 
-app._unparsable_cell(
-    r"""
-    #Marimo Preview Controls
-    sliders = mo.ui.dictionary(
+@app.cell
+def _(N, T, mo):
+    # Marimo Preview Controls
+    controls = mo.ui.dictionary(
         {
-            \"frame_number\": mo.ui.slider(
-                start=0,
-                stop=T - 1,
+            arg_name: mo.ui.slider(
+                start=min_val,
+                stop=max_val,
                 value=T // 2,
                 step=1,
-                label=\"frame_number:\",
+                label=arg_name,
                 include_input=True,
             )
+            for arg_name, (min_val, max_val) in dict(
+                frame_number=[0, T - 1],
+                status_width=[0, 500],
+                status_offset=[0, 100],
+            ).items()
         }
         | {
             arg_name: mo.ui.slider(
@@ -73,41 +78,31 @@ app._unparsable_cell(
                 include_input=True,
             )
             for arg_name in [
-                \"video_alpha\",
-                \"track_alpha\",
-                \"circles_alpha\",
-                \"arrows_alpha\",
-                \"target_trails_alpha\",
-                \"counter_trails_alpha\",
-                \"blended_trails_alpha\",
-                \"status_width\" = 200,
-                \"status_offset\" = 30,
-                \"status_alpha\" = 1,
+                "video_alpha",
+                "track_alpha",
+                "circles_alpha",
+                "arrows_alpha",
+                "target_trails_alpha",
+                "counter_trails_alpha",
+                "blended_trails_alpha",
+                "status_alpha",
+            ]
+        } |
+            {
+            arg_name: mo.ui.text(
+                value="blue",
+                label=arg_name,
+            )
+            for arg_name in [
+                "status_text",
+                "status_color",
             ]
         }
     )
     track_checkboxes = [
         mo.ui.checkbox(value=True, label=str(i + 1)) for i in range(N)
     ]
-    textboxes = [
-        mo.ui.text()
-                    \"status_text\" = \"Input Video\",
-                \"status_color\" = \"translucent green\",
-    ]
-
-    textboxes ={
-            arg_name: mo.ui.text(
-                value=\"Hello World\",
-                label=arg_name,
-            )
-            for arg_name in [
-                \"status_text\",
-                \"status_color\",
-            ]
-        }
-    """,
-    name="_"
-)
+    return controls, track_checkboxes
 
 
 @app.cell
@@ -123,9 +118,14 @@ def _(T, final_frame, rp, tween):
             target_trails_alpha=0.0,
             counter_trails_alpha=0.0,
             blended_trails_alpha=0.0,
+            status_width=0,
+            status_offset=0.0, 
+            status_alpha =0.0,
+            status_text="Input Video",
+            status_color="dark green",
             track_numbers=[],
         )
-        >> tween(T - 1, frame_number=T - 1)
+        >> tween(T - 1, frame_number=T - 1) + tween(T//2, status_width=300, status_alpha=1, status_offset=30, ease='cubic')
         >> tween(frame_number=0, track_numbers=[0, 1, 2])
         >> tween(T - 1, frame_number=T - 1) + tween(T - 1, circles_alpha=1)
     )
@@ -149,14 +149,29 @@ def _(T, final_frame, rp, tween):
 
 
 @app.cell
-def _(get_frame, mo, preview_frame_slider, render_video_button):
+def _(
+    controls,
+    get_frame,
+    mo,
+    preview_frame_slider,
+    render_video_button,
+    timeline,
+):
+    frame_number = preview_frame_slider.value
+    state = timeline[preview_frame_slider.value]
+    frame = get_frame(frame_number)
+
     mo.vstack(
         [
-            mo.image(get_frame(preview_frame_slider.value), width=720),
+            mo.image(frame, width=720),
             preview_frame_slider,
             render_video_button,
         ],
     )
+
+    for arg_name, control in controls.items():
+        if arg_name in state:
+            control.value = state
     return
 
 
