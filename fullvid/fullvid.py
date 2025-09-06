@@ -71,6 +71,7 @@ circles = [
 circles=rp.cv_resize_images(circles,size=.75)
 #display_alpha_image(blend_images('dark translucent blue',tiled_images(circles)))
 
+@rp.memoized_lru
 def circles_layer(tracks, visibles, frame_number, track_numbers=None):
     """
     EXAMPLE:
@@ -91,6 +92,7 @@ def circles_layer(tracks, visibles, frame_number, track_numbers=None):
                 
     return layer
 
+@rp.memoized_lru
 def trails_layer(tracks, visibles, frame_number, track_numbers=None):
 
     if track_numbers is None: track_numbers=range(N)
@@ -132,6 +134,7 @@ def trails_layer(tracks, visibles, frame_number, track_numbers=None):
 
     return layer
 
+@rp.memoized_lru
 def arrows_layer(src_tracks,src_visibles,dst_tracks,dst_visibles,frame_number,track_numbers=None,circle_radius=12):
     if track_numbers is None: track_numbers=range(N)
     layer = rp.uniform_byte_color_image(H, W)
@@ -177,6 +180,16 @@ def arrows_layer(src_tracks,src_visibles,dst_tracks,dst_visibles,frame_number,tr
         
     return layer
 
+@rp.memoized_lru
+def status_layer(text, color='translucent green'):
+    background = rp.uniform_byte_color_image(height=60,width=200,color='blue')
+    background = rp.with_corner_radius(background, 40, antialias=False)
+    background = rp.with_alpha_outline(background, inner_radius=10, color=' translucent white ')
+    text_image = rp.skia_text_to_image(text, font="Futura", size=50, color='white')
+    label_image = rp.skia_stamp_image(background,text_image,sprite_origin=(.5,.5),canvas_origin=(.5,.5))
+    label_image = rp.cv_resize_image(label_image,.5,alpha_weighted=True)
+    return label_image
+
 def srgb_blend(x,y,a):
     x = rp.srgb_to_linear(x)
     y = rp.srgb_to_linear(y)
@@ -184,6 +197,7 @@ def srgb_blend(x,y,a):
     z = rp.linear_to_srgb(z)
     return z
 
+@rp.memoized_lru
 def blended_video_layer(frame_number, alpha):
     return srgb_blend(target_video[frame_number], counter_video[frame_number], alpha)
 
@@ -202,10 +216,8 @@ def blended_video_layer(frame_number, alpha):
 # v=skia_stamp_video(v,ccl,show_progress=True)
 # v=skia_stamp_video(v,al,show_progress=True)
 # v=skia_stamp_video(v,al,show_progress=True)
-# display_video(v)
-
-
-
+# display_vrp.memoized_lru
+@rp.memoized_lru
 def final_frame(
     frame_number=25,
     video_alpha=.5,
