@@ -97,7 +97,7 @@ def get_circles_layer(tracks, visibles, frame_number, track_numbers=None):
     return layer
 
 @rp.memoized_lru
-def get_hand_layer(tracks, visibles, frame_number, grabbing=False, dx=0, dy=0, track_numbers=None):
+def get_hand_layer(tracks, visibles, frame_number, grabbing=False, dx=0, dy=0, hand_size=1.0, track_numbers=None):
     """
     EXAMPLE:
         >>> f=[get_circles_layer(target_tracks,target_visibles,t) for t in eta(range(T))]
@@ -112,6 +112,7 @@ def get_hand_layer(tracks, visibles, frame_number, grabbing=False, dx=0, dy=0, t
         x,y=tracks[frame_number,n]
         v=visibles[frame_number,n]
         hand = grab_icon if grabbing else hand_icon
+        hand = rp.cv_resize_image(hand, hand_size)
         if v:
             layer = rp.skia_stamp_image(layer,hand,offset=[x+dx,y+dy], sprite_origin=[.5,.5],copy=False)
                 
@@ -225,7 +226,7 @@ def srgb_blend(x,y,a):
 
 @rp.memoized_lru
 def blended_video_layer(frame_number, alpha):
-    return srgb_blend(target_video[frame_number], counter_video[frame_number], alpha)
+    return srgb_blend(counter_video[frame_number], target_video[frame_number], alpha)
 
 @rp.memoized_lru
 def final_frame(
@@ -241,6 +242,7 @@ def final_frame(
     hand_grabbing=False,
     hand_dx=0,
     hand_dy=0,
+    hand_size=1.0,
     track_numbers=None,
     status_text = "Input Video",
     status_color = "translucent green",
@@ -248,8 +250,6 @@ def final_frame(
     status_offset = 30,
     status_alpha = 1,
 ):
-
-    video_alpha = 1-track_alpha
 
     blended_tracks = rp.blend(counter_tracks, target_tracks, track_alpha)
     visibles = counter_visibles & target_visibles
@@ -261,7 +261,7 @@ def final_frame(
     target_trails_layer  = get_trails_layer(target_tracks , target_visibles , frame_number, track_numbers)
     counter_trails_layer = get_trails_layer(counter_tracks, counter_visibles, frame_number, track_numbers)
     blended_trails_layer = get_trails_layer(blended_tracks, counter_visibles, frame_number, track_numbers)
-    hand_layer = get_hand_layer(blended_tracks, visibles, frame_number, hand_grabbing, hand_dx, hand_dy, track_numbers)
+    hand_layer = get_hand_layer(blended_tracks, visibles, frame_number, hand_grabbing, hand_dx, hand_dy, hand_size, track_numbers)
     status_layer = get_status_layer(status_text, status_color, status_width, status_offset)
 
     output = blended_frame

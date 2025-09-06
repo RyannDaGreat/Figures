@@ -87,9 +87,10 @@ def _(N, T, mo):
                 "blended_trails_alpha",
                 "status_alpha",
                 "hand_alpha",
+                "hand_size",
             ]
-        } |
-            {
+        }
+        | {
             arg_name: mo.ui.text(
                 value="blue",
                 label=arg_name,
@@ -98,8 +99,8 @@ def _(N, T, mo):
                 "status_text",
                 "status_color",
             ]
-        } |
-            {
+        }
+        | {
             arg_name: mo.ui.checkbox(
                 value=False,
                 label=arg_name,
@@ -107,8 +108,8 @@ def _(N, T, mo):
             for arg_name in [
                 "hand_grabbing",
             ]
-        } |
-            {
+        }
+        | {
             arg_name: mo.ui.number(
                 value=0,
                 label=arg_name,
@@ -127,7 +128,7 @@ def _(N, T, mo):
 
 
 @app.cell
-def _(T, final_frame, rp, tween):
+def _(T, mo, tween):
     # Animation Definition
     timeline = (
         dict(
@@ -139,10 +140,11 @@ def _(T, final_frame, rp, tween):
             target_trails_alpha=0.0,
             counter_trails_alpha=0.0,
             blended_trails_alpha=0.0,
-            hand_alpha=0.0,
             hand_grabbing=False,
+            hand_alpha=0.0,
             hand_dx=0,
             hand_dy=0,
+            hand_size=1.0,
             status_width=0,
             status_offset=0.0, 
             status_alpha =0.0,
@@ -150,28 +152,21 @@ def _(T, final_frame, rp, tween):
             status_color="dark green",
             track_numbers=[],
         )
-        >> tween(T - 1, frame_number=T - 1) + tween(T//2, status_width=300, status_alpha=1, status_offset=30, ease='cubic')
-        >> tween(frame_number=0, track_numbers=[0, 1, 2])
+        >> ((( tween(T - 1, frame_number=T - 1) >> tween(frame_number=0, track_numbers=[0, 1, 2]) )  )
+           + tween(T//2, status_width=300, status_alpha=1, status_offset=30, ease='cubic'))
+
         >> tween(T - 1, frame_number=T - 1) + tween(T - 1, circles_alpha=1)
-        >> tween(T//4, hand_alpha=1, hand_grabbing=True, hand_dx=10, hand_dy=-10)
+        >> tween(T//4, hand_alpha=1, hand_grabbing=True, hand_dx=10, hand_dy=-10, hand_size=0.8)
+
+
+        # >> tween(T - 1, frame_number=T - 1) + tween(T//2, status_width=300, status_alpha=1, status_offset=30, ease='cubic')
+        # >> tween(frame_number=0, track_numbers=[0, 1, 2])
+        # >> tween(T - 1, frame_number=T - 1) + tween(T - 1, circles_alpha=1)
+        # >> tween(T//4, hand_alpha=1, hand_grabbing=True, hand_dx=10, hand_dy=-10, hand_size=0.8)
     )
 
-
-    def get_frame(frame_number):
-        state = timeline[frame_number]
-        frame = final_frame(**state)
-        return frame
-
-
-    def get_video():
-        for state in rp.eta(timeline, "Rendering"):
-            frame = final_frame(**state)
-            yield frame
-
-
-    # # rp.display_video(get_video())
-    # rp.display_video(get_video())
-    return get_frame, get_video, timeline
+    mo.md(f"Timeline Length: {len(timeline)}")
+    return (timeline,)
 
 
 @app.cell
@@ -188,6 +183,21 @@ def _(get_frame, mo, preview_frame_slider, render_video_button, timeline):
         ],
     )
     return
+
+
+@app.cell
+def _(final_frame, rp, timeline):
+    def get_frame(frame_number):
+        state = timeline[frame_number]
+        frame = final_frame(**state)
+        return frame
+
+
+    def get_video():
+        for state in rp.eta(timeline, "Rendering"):
+            frame = final_frame(**state)
+            yield frame
+    return get_frame, get_video
 
 
 @app.cell
@@ -213,6 +223,16 @@ def _(get_video, render_video_button, rp):
     if render_video_button.value:
         video = rp.display_video(get_video())
     video
+    return
+
+
+@app.cell
+def _():
+    return
+
+
+@app.cell
+def _():
     return
 
 
