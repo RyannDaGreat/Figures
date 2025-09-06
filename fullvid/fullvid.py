@@ -70,9 +70,10 @@ circles = [
             text=str(n + 1),
             color=color,
             rim_color="black",
-            diameter=30,
-            rim_width=2,
-            padding=30,
+            diameter=int(30 * DPI * 0.75),  # Apply 0.75 scaling factor directly to diameter
+            rim_width=int(2 * DPI),
+            padding=int(30 * DPI * 0.75),   # Apply 0.75 scaling factor directly to padding
+            font_size=int(30 * DPI * 0.75 * 0.65),  # Scale font size proportionally (0.65 is default ratio)
             with_checkerboard=False,
         ),
         color="white",
@@ -80,7 +81,6 @@ circles = [
     )
     for n,color in enumerate(colors)
 ]
-circles=rp.cv_resize_images(circles,size=.75 * DPI)
 #display_alpha_image(blend_images('dark translucent blue',tiled_images(circles)))
 
 def contig(x):
