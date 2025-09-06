@@ -250,10 +250,11 @@ def _(N, T, mo, rp, tween):
         >> tween(30, target_trails_alpha = 1., track_alpha = 1.) + (tween(30) >> play_video)
         >> (tween(T*2) >> tween(T*2, video_alpha=1))+ (
                play_video
-            >> play_video + tween(T, blended_trails_alpha = 0, counter_trails_alpha = 0, target_trails_alpha = 0, arrows_alpha = 0, hand_alpha = 0)
+            >> play_video + tween(T-1, blended_trails_alpha = 0, counter_trails_alpha = 0, target_trails_alpha = 0)
+            >> play_video + tween(T-1, arrows_alpha = 0)
+            >> play_video + tween(T-1, hand_alpha = 0)
             >> play_video
-            >> play_video
-            >> play_video + tween(T // 2, circles_alpha = 0)
+            >> play_video + tween(T-1, circles_alpha = 0)
         )
     
     
