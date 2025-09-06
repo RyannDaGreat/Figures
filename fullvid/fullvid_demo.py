@@ -11,59 +11,44 @@ def _():
     import fullvid
     import numpy as np
     from rp.libs.tweenline import tween
-    return fullvid, mo, rp, tween
+
+    from fullvid import (
+        target_video,
+        counter_video,
+        target_tracks,
+        counter_tracks,
+        target_visibles,
+        counter_visibles,
+        N,
+        T,
+        H,
+        W,
+        colors,
+        circles,
+        circles_layer,
+        trails_layer,
+        arrows_layer,
+        srgb_blend,
+        blended_video_layer,
+        final_frame,
+    )
+    return N, T, final_frame, mo, rp, tween
 
 
 @app.cell
-def _(mo):
-    mo.md("""# Full Video Visualization Demo 🎬""")
+def _(mo, result):
+    mo.image(result)
     return
-
-
-@app.cell
-def _(fullvid, mo):
-    # Import all the data and functions from fullvid
-
-    # Get the current data from fullvid module
-    target_video = fullvid.target_video
-    counter_video = fullvid.counter_video
-    target_tracks = fullvid.target_tracks
-    counter_tracks = fullvid.counter_tracks
-    target_visibles = fullvid.target_visibles
-    counter_visibles = fullvid.counter_visibles
-    N, T, H, W = fullvid.N, fullvid.T, fullvid.H, fullvid.W
-    colors = fullvid.colors
-    circles = fullvid.circles
-
-    # Import functions
-    circles_layer = fullvid.circles_layer
-    trails_layer = fullvid.trails_layer
-    arrows_layer = fullvid.arrows_layer
-    srgb_blend = fullvid.srgb_blend
-    blended_video_layer = fullvid.blended_video_layer
-    final_frame = fullvid.final_frame
-
-    mo.md(f"**Data loaded**: {T} frames, {N} tracks, {H}x{W} resolution")
-    return N, T, final_frame
 
 
 @app.cell
 def _(final_frame, mo, sliders, track_checkboxes):
     # Get selected track indices from checkboxes
-    selected_tracks = [
-        i for i, checkbox in enumerate(track_checkboxes) if checkbox.value
-    ]
+    selected_tracks = [i for i, checkbox in enumerate(track_checkboxes) if checkbox.value]
     track_numbers = selected_tracks if selected_tracks else None
 
     result = final_frame(
-        frame_number=sliders.value["frame_number"],
-        video_alpha=sliders.value["video_alpha"],
-        track_alpha=sliders.value["track_alpha"],
-        circles_alpha=sliders.value["circles_alpha"],
-        arrows_alpha=sliders.value["arrows_alpha"],
-        target_trails_alpha=sliders.value["target_trails_alpha"],
-        counter_trails_alpha=sliders.value["counter_trails_alpha"],
-        blended_trails_alpha=sliders.value["blended_trails_alpha"],
+        **{arg_name: slider.value for arg_name, slider in sliders.items()},
         track_numbers=track_numbers,
     )
 
@@ -71,31 +56,19 @@ def _(final_frame, mo, sliders, track_checkboxes):
         [
             mo.vstack(
                 [
-                    sliders["frame_number"],
-                    sliders["video_alpha"],
-                    sliders["track_alpha"],
-                    sliders["circles_alpha"],
-                    sliders["arrows_alpha"],
-                    sliders["target_trails_alpha"],
-                    sliders["counter_trails_alpha"],
-                    sliders["blended_trails_alpha"],
+                    *sliders.values(),
                     mo.md("**Track Selection:**"),
                     mo.hstack(track_checkboxes),
                 ]
             ),
-            mo.md(
-                f"""
-        **final_frame({sliders.value["frame_number"]}, {sliders.value["video_alpha"]:.2f}, {sliders.value["track_alpha"]:.2f}, {sliders.value["circles_alpha"]:.2f}, {sliders.value["arrows_alpha"]:.2f}, {sliders.value["target_trails_alpha"]:.2f}, {sliders.value["counter_trails_alpha"]:.2f}, {sliders.value["blended_trails_alpha"]:.2f})**
-        """
-            ),
         ]
     )
-    return
+    return (result,)
 
 
 @app.cell
 def _(N, T, mo):
-    # All sliders in a single dictionary for easier management
+    #Marimo Preview Controls
     sliders = mo.ui.dictionary(
         {
             "frame_number": mo.ui.slider(
@@ -105,66 +78,28 @@ def _(N, T, mo):
                 step=1,
                 label="frame_number:",
                 include_input=True,
-            ),
-            "video_alpha": mo.ui.slider(
+            )
+        }
+        | {
+            arg_name: mo.ui.slider(
                 start=0.0,
                 stop=1.0,
                 value=0.5,
                 step=0.01,
-                label="video_alpha:",
+                label=arg_name,
                 include_input=True,
-            ),
-            "track_alpha": mo.ui.slider(
-                start=0.0,
-                stop=1.0,
-                value=0.5,
-                step=0.01,
-                label="track_alpha:",
-                include_input=True,
-            ),
-            "circles_alpha": mo.ui.slider(
-                start=0.0,
-                stop=1.0,
-                value=1.0,
-                step=0.01,
-                label="circles_alpha:",
-                include_input=True,
-            ),
-            "arrows_alpha": mo.ui.slider(
-                start=0.0,
-                stop=1.0,
-                value=1.0,
-                step=0.01,
-                label="arrows_alpha:",
-                include_input=True,
-            ),
-            "target_trails_alpha": mo.ui.slider(
-                start=0.0,
-                stop=1.0,
-                value=0.8,
-                step=0.01,
-                label="target_trails_alpha:",
-                include_input=True,
-            ),
-            "counter_trails_alpha": mo.ui.slider(
-                start=0.0,
-                stop=1.0,
-                value=0.8,
-                step=0.01,
-                label="counter_trails_alpha:",
-                include_input=True,
-            ),
-            "blended_trails_alpha": mo.ui.slider(
-                start=0.0,
-                stop=1.0,
-                value=0.6,
-                step=0.01,
-                label="blended_trails_alpha:",
-                include_input=True,
-            ),
+            )
+            for arg_name in [
+                "video_alpha",
+                "track_alpha",
+                "circles_alpha",
+                "arrows_alpha",
+                "target_trails_alpha",
+                "counter_trails_alpha",
+                "blended_trails_alpha",
+            ]
         }
     )
-    # Track selection checkboxes - one for each track
     track_checkboxes = [
         mo.ui.checkbox(value=True, label=str(i + 1)) for i in range(N)
     ]
@@ -173,6 +108,7 @@ def _(N, T, mo):
 
 @app.cell
 def _(T, final_frame, rp, tween):
+    #Animation Definition
     timeline = (
         dict(
             frame_number=0,
@@ -243,16 +179,6 @@ def _(get_video, render_video_button, rp):
     if render_video_button.value:
         video = rp.display_video(get_video())
     video
-    return
-
-
-@app.cell
-def _():
-    return
-
-
-@app.cell
-def _():
     return
 
 

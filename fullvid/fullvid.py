@@ -1,7 +1,11 @@
 import rp
 from rp.r import _omni_load
 from rp.git.Figures.labeled_circle import labeled_circle
-from rp.git.Figures.arrow.arrow import skia_draw_contour,skia_draw_contours,skia_draw_arrow
+from rp.git.Figures.arrow.arrow import (
+    # skia_draw_contour,
+    skia_draw_contours,
+    skia_draw_arrow,
+)
 
 edit_path = "/Users/ryan/CleanCode/Projects/Google2025_Paper/inferblobs_edit_results/[Seed 5176] Judge_ Walk Out_copy2"
 edit_path = "/Users/ryan/CleanCode/Projects/Google2025_Paper/inferblobs_edit_results/[Seed 6303] Sora Basketball_ The ball goes into the hoop_copy1" ; indices = [3, 5]
@@ -201,22 +205,6 @@ def srgb_blend(x,y,a):
 def blended_video_layer(frame_number, alpha):
     return srgb_blend(target_video[frame_number], counter_video[frame_number], alpha)
 
-# tracks=target_tracks
-# visibles=target_visibles
-# bl =[blended_video_layer(.5 ,t) for t in eta(range(T))]
-# tl =[trails_layer(target_tracks ,target_visibles ,t) for t in eta(range(T))]
-# ctl=[trails_layer(counter_tracks,counter_visibles,t) for t in eta(range(T))]
-# cl =[circles_layer(target_tracks ,target_visibles ,t) for t in eta(range(T))]
-# ccl=[circles_layer(counter_tracks,counter_visibles,t) for t in eta(range(T))]
-# al=[arrows_layer(counter_tracks,counter_visibles,target_tracks,target_visibles,t) for t in eta(range(T))]
-# v=bl
-# v=skia_stamp_video(v,tl,show_progress=True)
-# v=skia_stamp_video(v,ctl,show_progress=True)
-# v=skia_stamp_video(v,cl,show_progress=True)
-# v=skia_stamp_video(v,ccl,show_progress=True)
-# v=skia_stamp_video(v,al,show_progress=True)
-# v=skia_stamp_video(v,al,show_progress=True)
-# display_vrp.memoized_lru
 @rp.memoized_lru
 def final_frame(
     frame_number=25,
@@ -246,7 +234,7 @@ def final_frame(
     output = blended_frame
     
     def imblend(x,y,a):return srgb_blend(x,y,a)
-    def imblend(x,y,a):return rp.skia_stamp_image(x,y,alpha=a)
+    # def imblend(x,y,a):return rp.skia_stamp_image(x,y,alpha=a)
 
     output = imblend(output, target_trails_layer , target_trails_alpha )
     output = imblend(output, blended_trails_layer, blended_trails_alpha)
