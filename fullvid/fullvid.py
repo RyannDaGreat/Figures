@@ -207,15 +207,31 @@ def get_arrows_layer(src_tracks,src_visibles,dst_tracks,dst_visibles,frame_numbe
     return layer
 
 @rp.memoized_lru
-def get_status_layer(text, color='translucent green', width=200, offset=20):
+def get_status_layer(text, color='translucent green', width=200, offset=20, x_shift=0):
     background = rp.uniform_byte_color_image(height=60,width=width,color=color)
     background = rp.with_corner_radius(background, 40, antialias=False)
     background = rp.with_alpha_outline(background, inner_radius=10, color=' translucent white ')
     text_image = rp.skia_text_to_image(text, font="Futura", size=50, color='white')
     label_image = rp.skia_stamp_image(background,text_image,sprite_origin=(.5,.5),canvas_origin=(.5,.5))
     label_image = rp.cv_resize_image(label_image,.5,alpha_weighted=True)
-    label_image = rp.shift_image(label_image, x=offset, y=offset) #Assuming we put it in top left corner
+    label_image = rp.bordered_image_solid_color(label_image, thickness=round(offset), color='transparent')
+    label_image = rp.shift_image(label_image, x=x_shift)
     return label_image
+
+@rp.memoized_lru
+def get_chat_layer(text='Hello World', background_color='black', rim_color='gray', text_color='white', width=400, height=60, font_size=24, y_offset=-20):
+    background = rp.uniform_byte_color_image(height=height, width=width, color=background_color)
+    background = rp.with_corner_radius(background, 20, antialias=False)
+    background = rp.with_alpha_outline(background, inner_radius=10, color=rim_color)
+    text_image = rp.skia_text_to_image(text, font="Futura", size=font_size, color=text_color)
+    chat_image = rp.skia_stamp_image(background, text_image, sprite_origin=(.5,.5), canvas_origin=(.5,.5))
+    chat_image = rp.cv_resize_image(chat_image,.5,alpha_weighted=True)
+    
+    # Position at bottom-center with y_offset
+    layer = rp.uniform_byte_color_image(H, W)
+    layer = rp.skia_stamp_image(layer, chat_image, offset=[0, y_offset], sprite_origin=(.5, 1), canvas_origin=(.5, 1), copy=False)
+    
+    return layer
 
 def srgb_blend(x,y,a):
     x = rp.srgb_to_linear(x)
@@ -249,6 +265,16 @@ def final_frame(
     status_width = 200,
     status_offset = 30,
     status_alpha = 1,
+    status_x_shift = 0,
+    chat_alpha = 1,
+    chat_text = "Hello World",
+    chat_background_color = "black",
+    chat_rim_color = "gray",
+    chat_text_color = "white",
+    chat_width = 400,
+    chat_height = 60,
+    chat_font_size = 24,
+    chat_y_offset = -20,
 ):
 
     blended_tracks = rp.blend(counter_tracks, target_tracks, track_alpha)
@@ -262,7 +288,8 @@ def final_frame(
     counter_trails_layer = get_trails_layer(counter_tracks, counter_visibles, frame_number, track_numbers)
     blended_trails_layer = get_trails_layer(blended_tracks, counter_visibles, frame_number, track_numbers)
     hand_layer = get_hand_layer(blended_tracks, visibles, frame_number, hand_grabbing, hand_dx, hand_dy, hand_size, track_numbers)
-    status_layer = get_status_layer(status_text, status_color, status_width, status_offset)
+    status_layer = get_status_layer(status_text, status_color, status_width, status_offset, status_x_shift)
+    chat_layer = get_chat_layer(chat_text, chat_background_color, chat_rim_color, chat_text_color, chat_width, chat_height, chat_font_size, chat_y_offset)
 
     output = blended_frame
     
@@ -275,6 +302,7 @@ def final_frame(
     output = imblend(output, circles_layer,circles_alpha)
     output = imblend(output, arrows_layer, arrows_alpha)
     output = imblend(output, hand_layer, hand_alpha)
+    output = imblend(output, chat_layer, chat_alpha)
     output = imblend(output, status_layer, status_alpha)
 
     return output

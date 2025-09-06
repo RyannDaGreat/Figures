@@ -88,6 +88,7 @@ def _(N, T, mo):
                 "status_alpha",
                 "hand_alpha",
                 "hand_size",
+                "chat_alpha",
             ]
         }
         | {
@@ -98,6 +99,10 @@ def _(N, T, mo):
             for arg_name in [
                 "status_text",
                 "status_color",
+                "chat_text",
+                "chat_background_color",
+                "chat_rim_color", 
+                "chat_text_color",
             ]
         }
         | {
@@ -118,6 +123,11 @@ def _(N, T, mo):
             for arg_name in [
                 "hand_dx",
                 "hand_dy",
+                "chat_width",
+                "chat_height",
+                "chat_font_size",
+                "chat_y_offset",
+                "status_x_shift",
             ]
         }
     )
@@ -128,35 +138,107 @@ def _(N, T, mo):
 
 
 @app.cell
-def _(T, mo, tween):
+def _(T, mo, rp, tween):
     # Animation Definition
+
+    play_video_no_end = tween(T - 1, frame_number=T - 1)
+    play_video = play_video_no_end >> tween(frame_number=0)
+    boom_video = play_video_no_end >> tween(T - 1, frame_number=0) #Boomerang
+
+    status_input_color  = rp.as_numpy_array(rp.as_rgba_float_color("dark green"  ))
+    status_output_color = rp.as_numpy_array(rp.as_rgba_float_color("dark hotpink"))
+    status_right_shift = 470
+    status_right_width = 350
+    status_left_width = 300
+    status_right  = tween(20, status_x_shift = status_right_shift, status_width=status_right_width, ease='cubic')
+    status_left   = tween(20, status_x_shift =                0  , status_width=status_left_width , ease='cubic')
+    status_visi   = tween(20, status_alpha=1, status_offset=30, ease='cubic')
+
+    #Change text half-way through a switch
+    status_input_str = "Input Video" 
+    status_output_str = "Edited Video"
+    status_input_text  = tween(10) >> tween(10, status_text=status_input_str )
+    status_output_text = tween(10) >> tween(10, status_text=status_output_str)
+
+    status_input  = status_left  + status_input_text  + tween(20, status_color=status_input_color , video_alpha=0, ease='cubic') 
+    status_output = status_right + status_output_text + tween(20, status_color=status_output_color, video_alpha=1, ease='cubic') 
+
+    status_output_state = dict(status_color=status_output_color, video_alpha=1, status_x_shift = status_right_shift, status_width = status_right_width)
+
+    chat_collapse = tween(20,  chat_width=  0)
+    chat_fadeout = tween(20, chat_alpha = .0)
+    chat_intro  = tween(20, chat_width=1000, chat_alpha =.75, chat_text = "Motion Edit: Move the Camera")
+    chat_step1  = tween(20, chat_width=1000, chat_alpha =.75, chat_text = "Step 1: Add Tracking Points")
+    chat_step2  = tween(20, chat_width=1000, chat_alpha =.75, chat_text = "Step 2: Edit Trajectories")
+
+    enable_counter_trails = tween(1, counter_trails_alpha=1)
+
+    reveal_tracks = tween(track_numbers=[0]) >> tween(5) >> tween(track_numbers=[0, 1]) >> tween(track_numbers=[0, 1, 2])
+
+    default_frame_number = 394#Hack because the slider doesnt persist
+
+    hands_fadein = tween(20, hand_alpha=1.0)
+
     timeline = (
         dict(
             frame_number=0,
             video_alpha=0.0,
             track_alpha=0.0,
-            circles_alpha=0.0,
+            circles_alpha=1.0,
             arrows_alpha=1.0,
             target_trails_alpha=0.0,
             counter_trails_alpha=0.0,
             blended_trails_alpha=0.0,
             hand_grabbing=False,
             hand_alpha=0.0,
-            hand_dx=0,
-            hand_dy=0,
+            hand_dx=-20,
+            hand_dy=20,
             hand_size=1.0,
             status_width=0,
             status_offset=0.0, 
             status_alpha =0.0,
             status_text="Input Video",
-            status_color="dark green",
+            status_color=status_input_color,
+            chat_alpha=1.0,
+            chat_text="Step 1: Add Tracking Points",
+            chat_background_color="black",
+            chat_rim_color="gray",
+            chat_text_color="white",
+            chat_width=0,
+            chat_height=120,
+            chat_font_size=64,
+            chat_y_offset=-20,
             track_numbers=[],
+            status_x_shift=0,
         )
-        >> ((( tween(T - 1, frame_number=T - 1) >> tween(frame_number=0, track_numbers=[0, 1, 2]) )  )
-           + tween(T//2, status_width=300, status_alpha=1, status_offset=30, ease='cubic'))
+        >> play_video + status_visi + status_input
+        >> play_video + chat_intro
+        >> play_video + chat_fadeout + status_output
+        >> play_video
+        >> status_input + tween(chat_width=0)
+        >> play_video + (
+            chat_step1
+            >> tween(10)
+            >> reveal_tracks
+        )
+        >> play_video + chat_fadeout + enable_counter_trails
+        >> play_video
+        >> play_video + (
+            chat_step2
+            >> tween(20, hand_dy=10, hand_dx=0, hand_size=1, hand_alpha=1.0, ease='cubic')
+            >> tween(hand_grabbing=True)
+        )
+        >> tween(30, target_trails_alpha = 1., track_alpha = 1.)
+        >> play_video * 2 + tween(T * 2, **status_output_state, ease='cubic') + (tween(T) >> tween(T, status_text = status_output_str, counter_trails_alpha=0, arrows_alpha=0, hand_alpha=0, hand_size=.5, ease='cubic'))
+        >> play_video
+        >> play_video + tween(20, circles_alpha = 0, target_trails_alpha=0, chat_alpha=0, ease='cubic')
+        >> play_video + status_input
+    
 
-        >> tween(T - 1, frame_number=T - 1) + tween(T - 1, circles_alpha=1)
-        >> tween(T//4, hand_alpha=1, hand_grabbing=True, hand_dx=10, hand_dy=-10, hand_size=0.8)
+        # >> play_video + 
+        # >> tween(T - 1, frame_number=T - 1) + tween(T - 1, circles_alpha=1)
+        # >> tween(T//4, hand_alpha=1, hand_grabbing=True, hand_dx=10, hand_dy=-10, hand_size=0.8)
+        # >> tween(T//8, chat_alpha=1, chat_text="Welcome to the demo!", chat_width=500)
 
 
         # >> tween(T - 1, frame_number=T - 1) + tween(T//2, status_width=300, status_alpha=1, status_offset=30, ease='cubic')
@@ -166,7 +248,7 @@ def _(T, mo, tween):
     )
 
     mo.md(f"Timeline Length: {len(timeline)}")
-    return (timeline,)
+    return default_frame_number, timeline
 
 
 @app.cell
@@ -201,11 +283,11 @@ def _(final_frame, rp, timeline):
 
 
 @app.cell
-def _(mo, timeline):
+def _(default_frame_number, mo, timeline):
     preview_frame_slider = mo.ui.slider(
         start=0,
         stop=len(timeline) - 1,
-        value=0,
+        value=default_frame_number,
         step=1,
         label="Frame Number:",
         include_input=True,
@@ -219,10 +301,12 @@ def _(mo, timeline):
 
 @app.cell
 def _(get_video, render_video_button, rp):
-    video = None
+    video_path = None
     if render_video_button.value:
-        video = rp.display_video(get_video())
-    video
+        video = get_video()
+        video_path = rp.save_video_mp4(video)
+        rp.open_file_with_default_application(video_path)
+    video_path
     return
 
 
