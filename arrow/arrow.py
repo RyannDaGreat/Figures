@@ -405,19 +405,54 @@ def _arrow_contours(x0,y0,x1,y1,tip_width=15,tip_height=15,tip_dimple=5, end_wid
     ]
     return gather_vars('tip stem full')
 
-def skia_draw_arrow(image, x0, y0, x1, y1, tip_width=15, tip_height=15, tip_dimple=5, end_width=5, start_width=3, color='black', **skia_kwargs):
-
+def skia_draw_arrow(image, x0, y0, x1, y1, tip_width=15, tip_height=15, tip_dimple=5, end_width=5, start_width=3, color='black', scale=1.0, **skia_kwargs):
+    """
+    Draw an arrow from (x0, y0) to (x1, y1) on the given image.
+    
+    Args:
+        image: Input image to draw the arrow on
+        x0, y0: Starting point coordinates of the arrow
+        x1, y1: Ending point coordinates of the arrow  
+        tip_width: Width of the arrow tip in pixels (default: 15)
+        tip_height: Height of the arrow tip in pixels (default: 15)
+        tip_dimple: Inward dimple depth at the base of the tip in pixels (default: 5)
+        end_width: Width of the arrow shaft at the tip end in pixels (default: 5)
+        start_width: Width of the arrow shaft at the starting end in pixels (default: 3)
+        color: Color of the arrow (default: 'black')
+        scale: Scale factor to apply to all dimensional parameters (default: 1.0)
+        **skia_kwargs: Additional arguments passed to the Skia drawing functions
+        
+    Returns:
+        Image with the arrow drawn on it
+    """
     if x0==x1 and y0==y1:
         return image
 
-    arrow = gather_args_call(_arrow_contours)
-    
-    skia_kwargs = dict(fill='translucent blue',shadow_opacity=1,shadow_color=(0,0,0,1),shadow_blur=2,stroke_width=1,
-                       ) | skia_kwargs
+    # Apply scale factor to dimensional parameters
+    scaled_tip_width = tip_width * scale
+    scaled_tip_height = tip_height * scale
+    scaled_tip_dimple = tip_dimple * scale
+    scaled_end_width = end_width * scale
+    scaled_start_width = start_width * scale
 
-    # image = skia_draw_contours(image,[arrow.stem,arrow.tip],**skia_kwargs)
-    image = skia_draw_contour(image, arrow.full, **skia_kwargs)
-    # image = skia_draw_contours(image,[dilated_contour(arrow.tip,r,loop=True) for r in [5] ],**skia_kwargs)
+    arrow = gather_args_call(_arrow_contours, 
+                           tip_width=scaled_tip_width, 
+                           tip_height=scaled_tip_height, 
+                           tip_dimple=scaled_tip_dimple, 
+                           end_width=scaled_end_width, 
+                           start_width=scaled_start_width)
+    
+    # Scale stroke_width and shadow_blur in skia_kwargs if present
+    scaled_skia_kwargs = dict(fill='translucent blue',shadow_opacity=1,shadow_color=(0,0,0,1),shadow_blur=int(2*scale),stroke_width=int(1*scale))
+    if 'stroke_width' in skia_kwargs:
+        scaled_skia_kwargs['stroke_width'] = int(skia_kwargs['stroke_width'] * scale)
+    if 'shadow_blur' in skia_kwargs:
+        scaled_skia_kwargs['shadow_blur'] = int(skia_kwargs['shadow_blur'] * scale)
+    scaled_skia_kwargs = scaled_skia_kwargs | skia_kwargs
+
+    # image = skia_draw_contours(image,[arrow.stem,arrow.tip],**scaled_skia_kwargs)
+    image = skia_draw_contour(image, arrow.full, **scaled_skia_kwargs)
+    # image = skia_draw_contours(image,[dilated_contour(arrow.tip,r,loop=True) for r in [5] ],**scaled_skia_kwargs)
     return image
 
 

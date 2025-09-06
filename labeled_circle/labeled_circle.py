@@ -1,7 +1,7 @@
 import rp
 
 
-def labeled_circle(text='8', color=(1, 0, 1, 1), rim_color=None, rim_width=-20, diameter=257, padding=10, font="Futura", text_color="black", font_size=None, text_style="bold", with_checkerboard=True, crop_zeros=True):
+def labeled_circle(text='8', color=(1, 0, 1, 1), rim_color=None, rim_width=-20, diameter=257, padding=10, font="Futura", text_color="black", font_size=None, text_style="bold", with_checkerboard=True, crop_zeros=True, scale=1.0):
     """
     Create a labeled circular graphic with customizable appearance.
     
@@ -18,6 +18,7 @@ def labeled_circle(text='8', color=(1, 0, 1, 1), rim_color=None, rim_width=-20, 
         text_style: Style string like "bold", "italic", "bold italic" (combined with text_color)
         with_checkerboard: Whether to apply alpha checkerboard background
         crop_zeros: Whether to crop transparent/zero pixels from the text before placing it
+        scale: Scale factor to apply to diameter, padding, rim_width, and font_size
     
     Returns:
         Image of the labeled circle
@@ -25,10 +26,18 @@ def labeled_circle(text='8', color=(1, 0, 1, 1), rim_color=None, rim_width=-20, 
     text = str(text)
     if rim_color is None:
         rim_color = color
+    
+    # Apply scale factor to dimensional parameters
+    scaled_diameter = int(diameter * scale)
+    scaled_padding = int(padding * scale)
+    scaled_rim_width = int(rim_width * scale)
+    
     if font_size is None:
-        font_size = diameter * 0.65
+        scaled_font_size = scaled_diameter * 0.65
+    else:
+        scaled_font_size = int(font_size * scale)
         
-    image_size = diameter + padding
+    image_size = scaled_diameter + scaled_padding
     circle_image = rp.uniform_float_color_image(
         color="transparent", height=image_size, width=image_size
     )
@@ -37,11 +46,11 @@ def labeled_circle(text='8', color=(1, 0, 1, 1), rim_color=None, rim_width=-20, 
     # Draw circle with fill and rim in one call
     circle_image = rp.cv_draw_circle(
         circle_image,
-        radius=diameter / 2,
+        radius=scaled_diameter / 2,
         x=image_size / 2,
         y=image_size / 2,
         color=color,        # Fill color
-        rim=rim_width,      # Rim thickness (positive=outward, negative=inward, 0=no rim)
+        rim=scaled_rim_width,      # Rim thickness (positive=outward, negative=inward, 0=no rim)
         rim_color=rim_color,  # Rim color
         copy=False
     )
@@ -53,7 +62,7 @@ def labeled_circle(text='8', color=(1, 0, 1, 1), rim_color=None, rim_width=-20, 
     text_image = rp.skia_text_to_image(
         text,
         font=font,
-        size=font_size,
+        size=scaled_font_size,
         style=full_style,
         character_spacing=0,
     )
