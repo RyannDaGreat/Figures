@@ -332,39 +332,29 @@ def _(final_frame, rp, timeline):
 
 
 @app.cell
-def _(default_frame_number, mo, timeline):
-    preview_frame_slider = mo.ui.slider(
+def _(default_frame_number, mo, partial, timeline):
+    make_frame_slider = partial(mo.ui.slider, include_input=True,debounce=False,full_width=True,step=1)
+
+    preview_frame_slider = make_frame_slider(
         start=0,
         stop=len(timeline) - 1,
         value=default_frame_number,
-        step=1,
         label="Frame Number:",
-        include_input=True,
-        debounce=False,
-        full_width=True,
     )
 
-    render_start_slider = mo.ui.slider(
+    render_start_slider = make_frame_slider(
         start=0,
         stop=len(timeline) - 1,
         value=0,
-        step=1,
         label="Render Start:",
-        include_input=True,
-        debounce=False,
-        full_width=True,
     )
 
 
-    render_end_slider = mo.ui.slider(
+    render_end_slider = make_frame_slider(
         start=0,
         stop=len(timeline),
         value=len(timeline),
-        step=1,
         label="Render End:",
-        include_input=True,
-        debounce=False,
-        full_width=True,
     )
 
     render_video_button = mo.ui.run_button(label="Render Video")
@@ -392,6 +382,11 @@ def _(
         video_path = rp.save_video_mp4(video, show_progress=False, framerate=30)
         rp.open_file_with_default_application(video_path)
     video_path
+    return
+
+
+@app.cell
+def _():
     return
 
 

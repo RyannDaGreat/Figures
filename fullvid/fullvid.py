@@ -9,8 +9,8 @@ from rp.git.Figures.arrow.arrow import (
 
 # edit_path = "/Users/ryan/CleanCode/Projects/Google2025_Paper/inferblobs_edit_results/[Seed 5176] Judge_ Walk Out_copy2" ; indices=slice(None)
 # edit_path = "/Users/ryan/CleanCode/Projects/Google2025_Paper/inferblobs_edit_results/[Seed 9995] Bichon + Corgi _ Corgi Stay Behind" ; indices=slice(None)
-edit_path = "/Users/ryan/CleanCode/Projects/Google2025_Paper/inferblobs_edit_results/[Seed 6303] Sora Basketball_ The ball goes into the hoop_copy1" ; indices = slice(None) ; #indices = [3, 5]
-# edit_path = "/Users/ryan/CleanCode/Projects/Google2025_Paper/inferblobs_edit_results/[Seed 1515] Blacks Freeze Camera_copy2" ; indices = slice(None)
+# edit_path = "/Users/ryan/CleanCode/Projects/Google2025_Paper/inferblobs_edit_results/[Seed 6303] Sora Basketball_ The ball goes into the hoop_copy1" ; indices = slice(None) ; #indices = [3, 5]
+edit_path = "/Users/ryan/CleanCode/Projects/Google2025_Paper/inferblobs_edit_results/[Seed 1515] Blacks Freeze Camera_copy2" ; indices = slice(None)
 
 hand_icon_path = "https://github.com/RyannDaGreat/MacCursors/blob/main/src/png/handopen%402x.png?raw=True"
 grab_icon_path = "https://github.com/RyannDaGreat/MacCursors/blob/main/src/png/handgrabbing@2x.png?raw=true"
@@ -51,6 +51,13 @@ N, T, H, W = rp.validate_tensor_shapes(
     return_dims="N T H W",
 )
 
+# DPI scaling parameter - when set to 2, doubles resolution of everything
+DPI = 2.0
+
+# Apply DPI scaling to dimensions
+H_SCALED = int(H * DPI)
+W_SCALED = int(W * DPI)
+
 colors = [
     (*rp.hsv_to_rgb_float_color(h, 0.5, 1), 1)
     for h in rp.np.linspace(0, 1, num=N, endpoint=False)
@@ -73,7 +80,7 @@ circles = [
     )
     for n,color in enumerate(colors)
 ]
-circles=rp.cv_resize_images(circles,size=.75)
+circles=rp.cv_resize_images(circles,size=.75 * DPI)
 #display_alpha_image(blend_images('dark translucent blue',tiled_images(circles)))
 
 def contig(x):
@@ -89,11 +96,11 @@ def get_circles_layer(tracks, visibles, frame_number, track_numbers=None):
     """
 
     if track_numbers is None: track_numbers=range(N)
-    layer = rp.uniform_byte_color_image(H, W)
+    layer = rp.uniform_byte_color_image(H_SCALED, W_SCALED)
     
     for n in track_numbers:
         circle=circles[n]
-        x,y=tracks[frame_number,n]
+        x,y=tracks[frame_number,n] * DPI
         v=visibles[frame_number,n]
         if v:
             layer = rp.skia_stamp_image(layer,circle,offset=[x,y], sprite_origin=[.5,.5],copy=False)
@@ -110,15 +117,15 @@ def get_hand_layer(tracks, visibles, frame_number, grabbing=False, dx=0, dy=0, h
     """
 
     if track_numbers is None: track_numbers=range(N)
-    layer = rp.uniform_byte_color_image(H, W)
+    layer = rp.uniform_byte_color_image(H_SCALED, W_SCALED)
     
     for n in track_numbers:
-        x,y=tracks[frame_number,n]
+        x,y=tracks[frame_number,n] * DPI
         v=visibles[frame_number,n]
         hand = grab_icon if grabbing else hand_icon
-        hand = rp.cv_resize_image(hand, hand_size)
+        hand = rp.cv_resize_image(hand, hand_size * DPI)
         if v:
-            layer = rp.skia_stamp_image(layer,hand,offset=[x+dx,y+dy], sprite_origin=[.5,.5],copy=False)
+            layer = rp.skia_stamp_image(layer,hand,offset=[x+dx*DPI,y+dy*DPI], sprite_origin=[.5,.5],copy=False)
                 
     return contig(layer)
 
@@ -126,7 +133,7 @@ def get_hand_layer(tracks, visibles, frame_number, grabbing=False, dx=0, dy=0, h
 def get_trails_layer(tracks, visibles, frame_number, track_numbers=None):
 
     if track_numbers is None: track_numbers=range(N)
-    layer = rp.uniform_byte_color_image(H, W)
+    layer = rp.uniform_byte_color_image(H_SCALED, W_SCALED)
     
     if frame_number>0:
 
@@ -137,7 +144,7 @@ def get_trails_layer(tracks, visibles, frame_number, track_numbers=None):
             subtrails = []
             for t in range(frame_number+1):
                 vis = visibles[t, n]
-                xy  = tracks[t,n]
+                xy  = tracks[t,n] * DPI
                 if vis and not old_vis:
                     subtrails+=[[xy]]
                 elif vis and old_vis:
@@ -148,10 +155,10 @@ def get_trails_layer(tracks, visibles, frame_number, track_numbers=None):
                 layer,
                 subtrails,
                 #
-                stroke_width=4,
+                stroke_width=int(4 * DPI),
                 shadow_opacity=1,
                 shadow_color=(1, 1, 1, 1),
-                shadow_blur=5,
+                shadow_blur=int(5 * DPI),
                 stroke_join='round',
                 stroke_type='dotted',
                 stroke_dash_scale=.5,
@@ -160,14 +167,15 @@ def get_trails_layer(tracks, visibles, frame_number, track_numbers=None):
                 close=False,
             )
             
-    layer=rp.with_drop_shadow(layer,color='black',blur=10)
+    layer=rp.with_drop_shadow(layer,color='black',blur=int(10 * DPI))
 
     return contig(layer)
 
 @rp.memoized_lru
 def get_arrows_layer(src_tracks,src_visibles,dst_tracks,dst_visibles,frame_number,track_numbers=None,circle_radius=12):
     if track_numbers is None: track_numbers=range(N)
-    layer = rp.uniform_byte_color_image(H, W)
+    layer = rp.uniform_byte_color_image(H_SCALED, W_SCALED)
+    circle_radius = circle_radius * DPI
     
     for n in track_numbers:
         color=colors[n]
@@ -177,8 +185,8 @@ def get_arrows_layer(src_tracks,src_visibles,dst_tracks,dst_visibles,frame_numbe
 
         src_v = src_visibles[frame_number,n]
         dst_v = dst_visibles[frame_number,n]
-        src_xy = src_tracks[frame_number,n]
-        dst_xy = dst_tracks[frame_number,n]
+        src_xy = src_tracks[frame_number,n] * DPI
+        dst_xy = dst_tracks[frame_number,n] * DPI
         
         delta = dst_xy - src_xy
         delta_mag = rp.magnitude(delta)
@@ -199,41 +207,46 @@ def get_arrows_layer(src_tracks,src_visibles,dst_tracks,dst_visibles,frame_numbe
                 src_y,
                 dst_x,
                 dst_y,
+                tip_width=int(15 * DPI),
+                tip_height=int(15 * DPI),
+                end_width=int(5 * DPI),
+                start_width=int(3 * DPI),
                 copy=False,
                 fill=color,
                 stroke_color=color_b,
+                stroke_width=int(1 * DPI),
                 stroke_join="round",
             )
 
 
-    layer=rp.with_drop_shadow(layer,color='black',blur=20)
+    layer=rp.with_drop_shadow(layer,color='black',blur=int(20 * DPI))
         
     return contig(layer)
 
 @rp.memoized_lru
 def get_status_layer(text, color='translucent green', width=200, offset=20, x_shift=0):
-    background = rp.uniform_byte_color_image(height=60,width=width,color=color)
-    background = rp.with_corner_radius(background, 40, antialias=False)
-    background = rp.with_alpha_outline(background, inner_radius=10, color=' translucent white ')
-    text_image = rp.skia_text_to_image(text, font="Futura", size=50, color='white')
+    background = rp.uniform_byte_color_image(height=int(60*DPI),width=int(width*DPI),color=color)
+    background = rp.with_corner_radius(background, int(40*DPI), antialias=False)
+    background = rp.with_alpha_outline(background, inner_radius=int(10*DPI), color=' translucent white ')
+    text_image = rp.skia_text_to_image(text, font="Futura", size=int(50*DPI), color='white')
     label_image = rp.skia_stamp_image(background,text_image,sprite_origin=(.5,.5),canvas_origin=(.5,.5))
     label_image = rp.cv_resize_image(label_image,.5,alpha_weighted=True)
-    label_image = rp.bordered_image_solid_color(label_image, thickness=round(offset), color='transparent')
-    label_image = rp.shift_image(label_image, x=x_shift)
+    label_image = rp.bordered_image_solid_color(label_image, thickness=round(offset*DPI), color='transparent')
+    label_image = rp.shift_image(label_image, x=int(x_shift*DPI))
     return contig(label_image)
 
 @rp.memoized_lru
 def get_chat_layer(text='Hello World', background_color='black', rim_color='gray', text_color='white', width=400, height=60, font_size=24, y_offset=-20):
-    background = rp.uniform_byte_color_image(height=height, width=width, color=background_color)
-    background = rp.with_corner_radius(background, 20, antialias=False)
-    background = rp.with_alpha_outline(background, inner_radius=10, color=rim_color)
-    text_image = rp.skia_text_to_image(text, font="Futura", size=font_size, color=text_color)
+    background = rp.uniform_byte_color_image(height=int(height*DPI), width=int(width*DPI), color=background_color)
+    background = rp.with_corner_radius(background, int(20*DPI), antialias=False)
+    background = rp.with_alpha_outline(background, inner_radius=int(10*DPI), color=rim_color)
+    text_image = rp.skia_text_to_image(text, font="Futura", size=int(font_size*DPI), color=text_color)
     chat_image = rp.skia_stamp_image(background, text_image, sprite_origin=(.5,.5), canvas_origin=(.5,.5))
     chat_image = rp.cv_resize_image(chat_image,.5,alpha_weighted=True)
     
     # Position at bottom-center with y_offset
-    layer = rp.uniform_byte_color_image(H, W)
-    layer = rp.skia_stamp_image(layer, chat_image, offset=[0, y_offset], sprite_origin=(.5, 1), canvas_origin=(.5, 1), copy=False)
+    layer = rp.uniform_byte_color_image(H_SCALED, W_SCALED)
+    layer = rp.skia_stamp_image(layer, chat_image, offset=[0, int(y_offset*DPI)], sprite_origin=(.5, 1), canvas_origin=(.5, 1), copy=False)
     
     return contig(layer)
 
@@ -246,7 +259,9 @@ def srgb_blend(x,y,a):
 
 @rp.memoized_lru
 def blended_video_layer(frame_number, alpha):
-    return srgb_blend(counter_video[frame_number], target_video[frame_number], alpha)
+    counter_frame = rp.cv_resize_image(counter_video[frame_number], (H_SCALED, W_SCALED))
+    target_frame = rp.cv_resize_image(target_video[frame_number], (H_SCALED, W_SCALED))
+    return srgb_blend(counter_frame, target_frame, alpha)
 
 @rp.memoized_lru
 def final_frame(
