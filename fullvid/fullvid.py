@@ -237,6 +237,10 @@ def final_frame(
     target_trails_alpha=1,
     counter_trails_alpha=1,
     blended_trails_alpha=1,
+    hand_alpha=1,
+    hand_grabbing=False,
+    hand_dx=0,
+    hand_dy=0,
     track_numbers=None,
     status_text = "Input Video",
     status_color = "translucent green",
@@ -257,6 +261,7 @@ def final_frame(
     target_trails_layer  = get_trails_layer(target_tracks , target_visibles , frame_number, track_numbers)
     counter_trails_layer = get_trails_layer(counter_tracks, counter_visibles, frame_number, track_numbers)
     blended_trails_layer = get_trails_layer(blended_tracks, counter_visibles, frame_number, track_numbers)
+    hand_layer = get_hand_layer(blended_tracks, visibles, frame_number, hand_grabbing, hand_dx, hand_dy, track_numbers)
     status_layer = get_status_layer(status_text, status_color, status_width, status_offset)
 
     output = blended_frame
@@ -269,6 +274,7 @@ def final_frame(
     output = imblend(output, counter_trails_layer, counter_trails_alpha)
     output = imblend(output, circles_layer,circles_alpha)
     output = imblend(output, arrows_layer, arrows_alpha)
+    output = imblend(output, hand_layer, hand_alpha)
     output = imblend(output, status_layer, status_alpha)
 
     return output

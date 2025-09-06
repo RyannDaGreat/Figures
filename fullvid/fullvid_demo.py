@@ -86,6 +86,7 @@ def _(N, T, mo):
                 "counter_trails_alpha",
                 "blended_trails_alpha",
                 "status_alpha",
+                "hand_alpha",
             ]
         } |
             {
@@ -96,6 +97,26 @@ def _(N, T, mo):
             for arg_name in [
                 "status_text",
                 "status_color",
+            ]
+        } |
+            {
+            arg_name: mo.ui.checkbox(
+                value=False,
+                label=arg_name,
+            )
+            for arg_name in [
+                "hand_grabbing",
+            ]
+        } |
+            {
+            arg_name: mo.ui.number(
+                value=0,
+                label=arg_name,
+                step=1,
+            )
+            for arg_name in [
+                "hand_dx",
+                "hand_dy",
             ]
         }
     )
@@ -118,6 +139,10 @@ def _(T, final_frame, rp, tween):
             target_trails_alpha=0.0,
             counter_trails_alpha=0.0,
             blended_trails_alpha=0.0,
+            hand_alpha=0.0,
+            hand_grabbing=False,
+            hand_dx=0,
+            hand_dy=0,
             status_width=0,
             status_offset=0.0, 
             status_alpha =0.0,
@@ -128,6 +153,7 @@ def _(T, final_frame, rp, tween):
         >> tween(T - 1, frame_number=T - 1) + tween(T//2, status_width=300, status_alpha=1, status_offset=30, ease='cubic')
         >> tween(frame_number=0, track_numbers=[0, 1, 2])
         >> tween(T - 1, frame_number=T - 1) + tween(T - 1, circles_alpha=1)
+        >> tween(T//4, hand_alpha=1, hand_grabbing=True, hand_dx=10, hand_dy=-10)
     )
 
 
