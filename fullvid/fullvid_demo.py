@@ -11,9 +11,10 @@ def _():
     import fullvid
     import numpy as np
     from rp.libs.tweenline import tween
+    from functools import partial
 
     from fullvid import final_frame, N, T, H, W
-    return N, T, final_frame, mo, rp, tween
+    return N, T, final_frame, mo, partial, rp, tween
 
 
 @app.cell
@@ -138,7 +139,7 @@ def _(N, T, mo):
 
 
 @app.cell
-def _(N, T, mo, rp, tween):
+def _(N, T, mo, partial, rp, tween):
     # Animation Definition
 
     play_video_no_end = tween(T - 1, frame_number=T - 1)
@@ -184,6 +185,7 @@ def _(N, T, mo, rp, tween):
         >> tween(track_numbers=chosen_numbers[:3])
     )
 
+    ctween = partial(tween, ease='cubic')
 
     default_frame_number = 394#Hack because the slider doesnt persist
 
@@ -242,28 +244,28 @@ def _(N, T, mo, rp, tween):
         >> tween(30, target_trails_alpha = 1., track_alpha = 1.)
         >> play_video * 2 + tween(T * 2, **status_output_state, ease='cubic') + 
         (tween(T) >> tween(T, status_text = status_output_str, counter_trails_alpha=0, arrows_alpha=0, hand_alpha=0, hand_size=.5, ease='cubic'))
-        >> play_video
+        >> play_video * 2
         >> play_video + tween(20, circles_alpha = 0, target_trails_alpha=0, chat_alpha=0, ease='cubic')
 
         >> play_video + tween(track_alpha=0) + status_input + ( chat_manytraj >> tween(track_numbers = range(N)) >> tween(20, circles_alpha=1))
-        >> play_video + ( tween(20) + tween(20, counter_trails_alpha=1)) 
+        >> play_video + ( tween(20) + ctween(20, counter_trails_alpha=1)) 
 
 
-        >> tween(hand_grabbing=False, hand_size=1, arrows_alpha=1)
+        >> ctween(hand_grabbing=False, hand_size=1, arrows_alpha=1)
         >> (tween(30, frame_number=30, ease='quad_out') >> tween(30, frame_number=0, ease='cubic')) + (
             tween(60)
             # >> chat_step2
             >> tween(20, hand_dy=10, hand_dx=0, hand_size=1, hand_alpha=1.0, ease='cubic')
             >> tween(hand_grabbing=True)
         )
-        >> tween(30, target_trails_alpha = 1., track_alpha = 1.) + (tween(30) >> play_video)
-        >> (tween(T*2) >> tween(T*2, video_alpha=1))+ (
+        >> ctween(30, target_trails_alpha = 1., track_alpha = 1.) + (tween(30) >> play_video)
+        >> (tween(T*2) >> ctween(T*2,  **status_output_state) + (tween(T)>>tween(T, status_text=status_output_str)))+ (
                play_video
-            >> play_video + tween(T-1, blended_trails_alpha = 0, counter_trails_alpha = 0, target_trails_alpha = 0)
-            >> play_video + tween(T-1, arrows_alpha = 0)
-            >> play_video + tween(T-1, hand_alpha = 0)
+            >> play_video + ctween(T-1, blended_trails_alpha = 0, counter_trails_alpha = 0, target_trails_alpha = 0)
+            >> play_video + ctween(T-1, arrows_alpha = 0)
+            >> play_video + ctween(T-1, hand_alpha = 0)
             >> play_video
-            >> play_video + tween(T-1, circles_alpha = 0)
+            >> play_video + ctween(T-1, circles_alpha = 0)
         )
 
 
@@ -387,9 +389,14 @@ def _(
         render_start = render_start_slider.value
         render_end = render_end_slider.value
         video = get_video(render_start, render_end)
-        video_path = rp.save_video_mp4(video)
+        video_path = rp.save_video_mp4(video, show_progress=False, framerate=30)
         rp.open_file_with_default_application(video_path)
     video_path
+    return
+
+
+@app.cell
+def _():
     return
 
 
