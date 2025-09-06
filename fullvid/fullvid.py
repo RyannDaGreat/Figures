@@ -7,10 +7,11 @@ from rp.git.Figures.arrow.arrow import (
     skia_draw_arrow,
 )
 
-# edit_path = "/Users/ryan/CleanCode/Projects/Google2025_Paper/inferblobs_edit_results/[Seed 5176] Judge_ Walk Out_copy2" ; indices=slice(None)
-# edit_path = "/Users/ryan/CleanCode/Projects/Google2025_Paper/inferblobs_edit_results/[Seed 9995] Bichon + Corgi _ Corgi Stay Behind" ; indices=slice(None)
-# edit_path = "/Users/ryan/CleanCode/Projects/Google2025_Paper/inferblobs_edit_results/[Seed 6303] Sora Basketball_ The ball goes into the hoop_copy1" ; indices = slice(None) ; #indices = [3, 5]
-edit_path = "/Users/ryan/CleanCode/Projects/Google2025_Paper/inferblobs_edit_results/[Seed 1515] Blacks Freeze Camera_copy2" ; indices = slice(None)
+# edit_path = "/Users/ryan/CleanCode/Projects/Google2025_Paper/inferblobs_edit_results/[Seed 5176] Judge_ Walk Out_copy2" ; indices=slice(None) ; chosen_numbers = [0, 1, 2, 3, 4, 5]
+# edit_path = "/Users/ryan/CleanCode/Projects/Google2025_Paper/inferblobs_edit_results/[Seed 9995] Bichon + Corgi _ Corgi Stay Behind" ; indices=slice(None) ; chosen_numbers = [0, 1]
+edit_path = "/Users/ryan/CleanCode/Projects/Google2025_Paper/inferblobs_edit_results/[Seed 6303] Sora Basketball_ The ball goes into the hoop_copy1" ; indices = slice(None) ; chosen_numbers = [3, 5]
+edit_path = "/Users/ryan/CleanCode/Projects/Google2025_Paper/inferblobs_edit_results/[Seed 1515] Blacks Freeze Camera_copy2" ; indices = slice(None) ; chosen_numbers = [0, 1, 2]
+edit_path = "/Users/ryan/CleanCode/Projects/Google2025_Paper/inferblobs_edit_results/[Seed 1515] Blacks Freeze Camera SLOWMO" ; indices = slice(None) ; chosen_numbers = [0, 1, 2]
 
 hand_icon_path = "https://github.com/RyannDaGreat/MacCursors/blob/main/src/png/handopen%402x.png?raw=True"
 grab_icon_path = "https://github.com/RyannDaGreat/MacCursors/blob/main/src/png/handgrabbing@2x.png?raw=true"
@@ -70,10 +71,10 @@ circles = [
             text=str(n + 1),
             color=color,
             rim_color="black",
-            diameter=int(30 * DPI * 0.75),  # Apply 0.75 scaling factor directly to diameter
-            rim_width=int(2 * DPI),
-            padding=int(30 * DPI * 0.75),   # Apply 0.75 scaling factor directly to padding
-            font_size=int(30 * DPI * 0.75 * 0.65),  # Scale font size proportionally (0.65 is default ratio)
+            diameter=30,
+            rim_width=2,
+            padding=30,
+            scale=DPI * 0.75,  # Apply DPI and 0.75 factor via scale parameter
             with_checkerboard=False,
         ),
         color="white",
@@ -207,14 +208,11 @@ def get_arrows_layer(src_tracks,src_visibles,dst_tracks,dst_visibles,frame_numbe
                 src_y,
                 dst_x,
                 dst_y,
-                tip_width=int(15 * DPI),
-                tip_height=int(15 * DPI),
-                end_width=int(5 * DPI),
-                start_width=int(3 * DPI),
+                scale=DPI,  # Apply DPI scaling via scale parameter
                 copy=False,
                 fill=color,
                 stroke_color=color_b,
-                stroke_width=int(1 * DPI),
+                stroke_width=1,
                 stroke_join="round",
             )
 
