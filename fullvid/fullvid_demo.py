@@ -12,27 +12,8 @@ def _():
     import numpy as np
     from rp.libs.tweenline import tween
 
-    from fullvid import (
-        target_video,
-        counter_video,
-        target_tracks,
-        counter_tracks,
-        target_visibles,
-        counter_visibles,
-        N,
-        T,
-        H,
-        W,
-        colors,
-        circles,
-        circles_layer,
-        trails_layer,
-        arrows_layer,
-        srgb_blend,
-        blended_video_layer,
-        final_frame,
-    )
-    return N, T, final_frame, mo, rp, tween
+    from fullvid import final_frame, N, T, H, W
+    return T, final_frame, mo, rp, tween
 
 
 @app.cell
@@ -44,7 +25,9 @@ def _(mo, result):
 @app.cell
 def _(final_frame, mo, sliders, track_checkboxes):
     # Get selected track indices from checkboxes
-    selected_tracks = [i for i, checkbox in enumerate(track_checkboxes) if checkbox.value]
+    selected_tracks = [
+        i for i, checkbox in enumerate(track_checkboxes) if checkbox.value
+    ]
     track_numbers = selected_tracks if selected_tracks else None
 
     result = final_frame(
@@ -66,17 +49,17 @@ def _(final_frame, mo, sliders, track_checkboxes):
     return (result,)
 
 
-@app.cell
-def _(N, T, mo):
+app._unparsable_cell(
+    r"""
     #Marimo Preview Controls
     sliders = mo.ui.dictionary(
         {
-            "frame_number": mo.ui.slider(
+            \"frame_number\": mo.ui.slider(
                 start=0,
                 stop=T - 1,
                 value=T // 2,
                 step=1,
-                label="frame_number:",
+                label=\"frame_number:\",
                 include_input=True,
             )
         }
@@ -90,25 +73,46 @@ def _(N, T, mo):
                 include_input=True,
             )
             for arg_name in [
-                "video_alpha",
-                "track_alpha",
-                "circles_alpha",
-                "arrows_alpha",
-                "target_trails_alpha",
-                "counter_trails_alpha",
-                "blended_trails_alpha",
+                \"video_alpha\",
+                \"track_alpha\",
+                \"circles_alpha\",
+                \"arrows_alpha\",
+                \"target_trails_alpha\",
+                \"counter_trails_alpha\",
+                \"blended_trails_alpha\",
+                \"status_width\" = 200,
+                \"status_offset\" = 30,
+                \"status_alpha\" = 1,
             ]
         }
     )
     track_checkboxes = [
         mo.ui.checkbox(value=True, label=str(i + 1)) for i in range(N)
     ]
-    return sliders, track_checkboxes
+    textboxes = [
+        mo.ui.text()
+                    \"status_text\" = \"Input Video\",
+                \"status_color\" = \"translucent green\",
+    ]
+
+    textboxes ={
+            arg_name: mo.ui.text(
+                value=\"Hello World\",
+                label=arg_name,
+            )
+            for arg_name in [
+                \"status_text\",
+                \"status_color\",
+            ]
+        }
+    """,
+    name="_"
+)
 
 
 @app.cell
 def _(T, final_frame, rp, tween):
-    #Animation Definition
+    # Animation Definition
     timeline = (
         dict(
             frame_number=0,

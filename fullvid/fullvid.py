@@ -76,10 +76,10 @@ circles=rp.cv_resize_images(circles,size=.75)
 #display_alpha_image(blend_images('dark translucent blue',tiled_images(circles)))
 
 @rp.memoized_lru
-def circles_layer(tracks, visibles, frame_number, track_numbers=None):
+def get_circles_layer(tracks, visibles, frame_number, track_numbers=None):
     """
     EXAMPLE:
-        >>> f=[circles_layer(target_tracks,target_visibles,t) for t in eta(range(T))]
+        >>> f=[get_circles_layer(target_tracks,target_visibles,t) for t in eta(range(T))]
         >>> q=skia_stamp_video(target_video,f)
         >>> display_video(q)
     """
@@ -97,7 +97,7 @@ def circles_layer(tracks, visibles, frame_number, track_numbers=None):
     return layer
 
 @rp.memoized_lru
-def trails_layer(tracks, visibles, frame_number, track_numbers=None):
+def get_trails_layer(tracks, visibles, frame_number, track_numbers=None):
 
     if track_numbers is None: track_numbers=range(N)
     layer = rp.uniform_byte_color_image(H, W)
@@ -139,7 +139,7 @@ def trails_layer(tracks, visibles, frame_number, track_numbers=None):
     return layer
 
 @rp.memoized_lru
-def arrows_layer(src_tracks,src_visibles,dst_tracks,dst_visibles,frame_number,track_numbers=None,circle_radius=12):
+def get_arrows_layer(src_tracks,src_visibles,dst_tracks,dst_visibles,frame_number,track_numbers=None,circle_radius=12):
     if track_numbers is None: track_numbers=range(N)
     layer = rp.uniform_byte_color_image(H, W)
     
@@ -185,13 +185,14 @@ def arrows_layer(src_tracks,src_visibles,dst_tracks,dst_visibles,frame_number,tr
     return layer
 
 @rp.memoized_lru
-def status_layer(text, color='translucent green'):
-    background = rp.uniform_byte_color_image(height=60,width=200,color='blue')
+def get_status_layer(text, color='translucent green', width=200, offset=20):
+    background = rp.uniform_byte_color_image(height=60,width=width,color='blue')
     background = rp.with_corner_radius(background, 40, antialias=False)
     background = rp.with_alpha_outline(background, inner_radius=10, color=' translucent white ')
     text_image = rp.skia_text_to_image(text, font="Futura", size=50, color='white')
     label_image = rp.skia_stamp_image(background,text_image,sprite_origin=(.5,.5),canvas_origin=(.5,.5))
     label_image = rp.cv_resize_image(label_image,.5,alpha_weighted=True)
+    label_image = rp.shift_image(label_image, x=offset, y=offset) #Assuming we put it in top left corner
     return label_image
 
 def srgb_blend(x,y,a):
@@ -216,6 +217,11 @@ def final_frame(
     counter_trails_alpha=1,
     blended_trails_alpha=1,
     track_numbers=None,
+    status_text = "Input Video",
+    status_color = "translucent green",
+    status_width = 200,
+    status_offset = 30,
+    status_alpha = 1,
 ):
 
     video_alpha = 1-track_alpha
@@ -225,11 +231,12 @@ def final_frame(
 
     blended_frame = blended_video_layer(frame_number, video_alpha)
 
-    circles_layer_out = circles_layer(blended_tracks, visibles, frame_number, track_numbers)
-    arrows_layer_out = arrows_layer(counter_tracks, counter_visibles, blended_tracks, target_visibles, frame_number, track_numbers)
-    target_trails_layer  = trails_layer(target_tracks , target_visibles , frame_number, track_numbers)
-    counter_trails_layer = trails_layer(counter_tracks, counter_visibles, frame_number, track_numbers)
-    blended_trails_layer = trails_layer(blended_tracks, counter_visibles, frame_number, track_numbers)
+    circles_layer = get_circles_layer(blended_tracks, visibles, frame_number, track_numbers)
+    arrows_layer = get_arrows_layer(counter_tracks, counter_visibles, blended_tracks, target_visibles, frame_number, track_numbers)
+    target_trails_layer  = get_trails_layer(target_tracks , target_visibles , frame_number, track_numbers)
+    counter_trails_layer = get_trails_layer(counter_tracks, counter_visibles, frame_number, track_numbers)
+    blended_trails_layer = get_trails_layer(blended_tracks, counter_visibles, frame_number, track_numbers)
+    status_layer = get_status_layer(status_text, status_color, status_width, status_offset)
 
     output = blended_frame
     
@@ -239,8 +246,9 @@ def final_frame(
     output = imblend(output, target_trails_layer , target_trails_alpha )
     output = imblend(output, blended_trails_layer, blended_trails_alpha)
     output = imblend(output, counter_trails_layer, counter_trails_alpha)
-    output = imblend(output, circles_layer_out,circles_alpha)
-    output = imblend(output, arrows_layer_out, arrows_alpha)
+    output = imblend(output, circles_layer,circles_alpha)
+    output = imblend(output, arrows_layer, arrows_alpha)
+    output = imblend(output, status_layer, status_alpha)
 
     return output
 
