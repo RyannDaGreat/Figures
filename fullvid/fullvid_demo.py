@@ -102,7 +102,7 @@ def _(N, T, mo):
                 "status_color",
                 "chat_text",
                 "chat_background_color",
-                "chat_rim_color", 
+                "chat_rim_color",
                 "chat_text_color",
             ]
         }
@@ -157,9 +157,9 @@ def _(N, T, mo, partial, rp, tween):
     status_right_shift = 470
     status_right_width = 350
     status_left_width = 300
-    status_right  = stween(20, status_x_shift = status_right_shift, status_width=status_right_width, ease='cubic')
-    status_left   = stween(20, status_x_shift =                0  , status_width=status_left_width , ease='cubic')
-    status_visi   = stween(20, status_alpha=1, status_offset=30, ease='cubic')
+    status_right  = cstween(20, status_x_shift = status_right_shift, status_width=status_right_width, ease='cubic')
+    status_left   = cstween(20, status_x_shift =                0  , status_width=status_left_width , ease='cubic')
+    status_visi   = cstween(20, status_alpha=1, status_offset=30, ease='cubic')
 
     #Change text half-way through a switch
     status_input_str = "Input Video" 
@@ -172,17 +172,18 @@ def _(N, T, mo, partial, rp, tween):
 
     status_output_state = dict(status_color=status_output_color, video_alpha=1, status_x_shift = status_right_shift, status_width = status_right_width)
 
-    chat_collapse = stween(20,  chat_width=  0)
-    chat_fadeout = stween(20, chat_alpha = .0)
-    chat_intro  = stween(20, chat_width=1000, chat_alpha =.75, chat_text = "Video Motion Edit")
-    chat_step1  = stween(20, chat_width=1000, chat_alpha =.75, chat_text = "Step 1: Add Tracking Points")
-    chat_step2  = stween(20, chat_width=1000, chat_alpha =.75, chat_text = "Step 2: Edit Trajectories")
-    chat_manytraj  = stween(20, chat_width=1000, chat_alpha =.75, chat_text = "Edit Many Points")
+    chat_collapse = cstween(20,  chat_width=  0)
+    chat_fadeout = cstween(20, chat_alpha = .0)
+    chat_intro  = cstween(20, chat_width=1000, chat_alpha =.75, chat_text = "Video Motion Edit")
+    chat_step1  = cstween(20, chat_width=1000, chat_alpha =.75, chat_text = "Step 1: Add Tracking Points")
+    chat_step2  = cstween(20, chat_width=1000, chat_alpha =.75, chat_text = "Step 2: Edit Trajectories")
+    chat_manytraj  = cstween(20, chat_width=1000, chat_alpha =.75, chat_text = "Add More Tracking Points")
 
-    enable_counter_trails = stween(1, counter_trails_alpha=1)
+    enable_counter_trails = cstween(1, counter_trails_alpha=1)
 
     chosen_numbers = [3, 5]#basketball
     chosen_numbers = [0,1,2]#Swan
+    chosen_numbers = [1]#Dogs
 
     reveal_tracks = (
            stween(track_numbers=chosen_numbers[:1])
@@ -191,6 +192,10 @@ def _(N, T, mo, partial, rp, tween):
         >> stween(5)
         >> stween(track_numbers=chosen_numbers[:3])
     )
+
+    big_hand_size=.75
+    hand_grab_dy=13
+    hand_grab_dx=-2
 
     default_frame_number = 394#Hack because the slider doesnt persist
 
@@ -208,9 +213,9 @@ def _(N, T, mo, partial, rp, tween):
             blended_trails_alpha=0.0,
             hand_grabbing=False,
             hand_alpha=0.0,
-            hand_dx=-20,
-            hand_dy=20,
-            hand_size=1.0,
+            hand_dx=-40,
+            hand_dy=40,
+            hand_size=big_hand_size,
             status_width=0,
             status_offset=0.0, 
             status_alpha =0.0,
@@ -243,7 +248,7 @@ def _(N, T, mo, partial, rp, tween):
         >> (stween(30, frame_number=timescale*30, ease='quad_out') >> stween(30, frame_number=0, ease='cubic')) + (
             stween(60)
             >> chat_step2
-            >> stween(20, hand_dy=10, hand_dx=0, hand_size=1, hand_alpha=1.0, ease='cubic')
+            >> stween(20, hand_dy=hand_grab_dy, hand_dx=hand_grab_dx, hand_size=big_hand_size, hand_alpha=1.0, ease='cubic')
             >> stween(hand_grabbing=True)
         )
         >> stween(30, target_trails_alpha = 1., track_alpha = 1.)
@@ -256,11 +261,11 @@ def _(N, T, mo, partial, rp, tween):
         >> play_video + ( stween(20) + cstween(20, counter_trails_alpha=1)) 
 
 
-        >> cstween(hand_grabbing=False, hand_size=1, arrows_alpha=1)
+        >> cstween(hand_grabbing=False, hand_size=big_hand_size, arrows_alpha=1)
         >> (stween(30, frame_number=T//4*3, ease='quad_out') >> stween(30, frame_number=0, ease='cubic')) + (
             stween(60)
             # >> chat_step2
-            >> stween(20, hand_dy=10, hand_dx=0, hand_size=1, hand_alpha=1.0, ease='cubic')
+            >> stween(20, hand_dy=hand_grab_dy, hand_dx=hand_grab_dx, hand_size=big_hand_size, hand_alpha=1.0, ease='cubic')
             >> stween(hand_grabbing=True)
         )
         >> cstween(30, target_trails_alpha = 1., track_alpha = 1.) + (stween(30) >> play_video)
@@ -330,7 +335,7 @@ def _(final_frame, rp, timeline):
 
 
     def get_video(render_start=None, render_end=None):
-        for frame_number in rp.eta(range(render_start, render_end),  "Rendering"):
+        for frame_number in rp.eta(range(render_start, render_end), "Rendering"):
             yield get_frame(frame_number)
         # for state in rp.eta(timeline, "Rendering"):
         #     frame = final_frame(**state)
@@ -340,7 +345,9 @@ def _(final_frame, rp, timeline):
 
 @app.cell
 def _(default_frame_number, mo, partial, timeline):
-    make_frame_slider = partial(mo.ui.slider, include_input=True,debounce=False,full_width=True,step=1)
+    make_frame_slider = partial(
+        mo.ui.slider, include_input=True, debounce=False, full_width=True, step=1
+    )
 
     preview_frame_slider = make_frame_slider(
         start=0,
@@ -389,6 +396,13 @@ def _(
         video_path = rp.save_video_mp4(video, show_progress=False, framerate=60)
         rp.open_file_with_default_application(video_path)
     video_path
+    return
+
+
+@app.cell
+def _():
+    # get_video
+    # rp.pterm()
     return
 
 

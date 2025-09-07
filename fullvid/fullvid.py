@@ -6,12 +6,18 @@ from rp.git.Figures.arrow.arrow import (
     skia_draw_contours,
     skia_draw_arrow,
 )
+import numpy as np
+
+FAST_MODE=False
+# FAST_MODE=True 
+
 
 # edit_path = "/Users/ryan/CleanCode/Projects/Google2025_Paper/inferblobs_edit_results/[Seed 5176] Judge_ Walk Out_copy2" ; indices=slice(None) ; chosen_numbers = [0, 1, 2, 3, 4, 5]
 # edit_path = "/Users/ryan/CleanCode/Projects/Google2025_Paper/inferblobs_edit_results/[Seed 9995] Bichon + Corgi _ Corgi Stay Behind" ; indices=slice(None) ; chosen_numbers = [0, 1]
-edit_path = "/Users/ryan/CleanCode/Projects/Google2025_Paper/inferblobs_edit_results/[Seed 6303] Sora Basketball_ The ball goes into the hoop_copy1" ; indices = slice(None) ; chosen_numbers = [3, 5]
-edit_path = "/Users/ryan/CleanCode/Projects/Google2025_Paper/inferblobs_edit_results/[Seed 1515] Blacks Freeze Camera_copy2" ; indices = slice(None) ; chosen_numbers = [0, 1, 2]
-edit_path = "/Users/ryan/CleanCode/Projects/Google2025_Paper/inferblobs_edit_results/[Seed 1515] Blacks Freeze Camera SLOWMO" ; indices = slice(None) ; chosen_numbers = [0, 1, 2]
+edit_path = "/Users/ryan/CleanCode/Projects/Google2025_Paper/inferblobs_edit_results/[Seed 9995] Bichon + Corgi _ Corgi Stay Behind SLOWMO" ; indices=slice(None) ; chosen_numbers = [0, 1]
+# edit_path = "/Users/ryan/CleanCode/Projects/Google2025_Paper/inferblobs_edit_results/[Seed 6303] Sora Basketball_ The ball goes into the hoop_copy1" ; indices = slice(None) ; chosen_numbers = [3, 5]
+# edit_path = "/Users/ryan/CleanCode/Projects/Google2025_Paper/inferblobs_edit_results/[Seed 1515] Blacks Freeze Camera_copy2" ; indices = slice(None) ; chosen_numbers = [0, 1, 2]
+# edit_path = "/Users/ryan/CleanCode/Projects/Google2025_Paper/inferblobs_edit_results/[Seed 1515] Blacks Freeze Camera SLOWMO" ; indices = slice(None) ; chosen_numbers = [0, 1, 2]
 
 hand_icon_path = "https://github.com/RyannDaGreat/MacCursors/blob/main/src/png/handopen%402x.png?raw=True"
 grab_icon_path = "https://github.com/RyannDaGreat/MacCursors/blob/main/src/png/handgrabbing@2x.png?raw=true"
@@ -55,6 +61,9 @@ N, T, H, W = rp.validate_tensor_shapes(
 # DPI scaling parameter - when set to 2, doubles resolution of everything
 DPI = 2.0
 
+#Only put hands where the tracks differ
+hand_numbers = list(np.argwhere(~(((counter_tracks - target_tracks)**2).mean((0,2)) < 5)).flatten())
+
 # Apply DPI scaling to dimensions
 H_SCALED = int(H * DPI)
 W_SCALED = int(W * DPI)
@@ -87,7 +96,7 @@ circles = [
 def contig(x):
     return rp.as_rgba_image(rp.as_byte_image(x,copy=False),copy=False)
 
-@rp.memoized_lru
+@rp.memoized_lru(2048)
 def get_circles_layer(tracks, visibles, frame_number, track_numbers=None):
     """
     EXAMPLE:
@@ -101,14 +110,14 @@ def get_circles_layer(tracks, visibles, frame_number, track_numbers=None):
     
     for n in track_numbers:
         circle=circles[n]
-        x,y=tracks[frame_number,n] * DPI
+        x,y=tracks[frame_number,n].astype(float) * DPI  # Ensure float precision
         v=visibles[frame_number,n]
         if v:
-            layer = rp.skia_stamp_image(layer,circle,offset=[x,y], sprite_origin=[.5,.5],copy=False)
+            layer = rp.skia_stamp_image(layer,circle,offset=[float(x),float(y)], sprite_origin=[.5,.5],copy=False)
                 
     return contig(layer)
 
-@rp.memoized_lru
+@rp.memoized_lru(2048)
 def get_hand_layer(tracks, visibles, frame_number, grabbing=False, dx=0, dy=0, hand_size=1.0, track_numbers=None):
     """
     EXAMPLE:
@@ -121,16 +130,16 @@ def get_hand_layer(tracks, visibles, frame_number, grabbing=False, dx=0, dy=0, h
     layer = rp.uniform_byte_color_image(H_SCALED, W_SCALED)
     
     for n in track_numbers:
-        x,y=tracks[frame_number,n] * DPI
+        x,y=tracks[frame_number,n].astype(float) * DPI  # Ensure float precision
         v=visibles[frame_number,n]
         hand = grab_icon if grabbing else hand_icon
         hand = rp.cv_resize_image(hand, hand_size * DPI)
         if v:
-            layer = rp.skia_stamp_image(layer,hand,offset=[x+dx*DPI,y+dy*DPI], sprite_origin=[.5,.5],copy=False)
+            layer = rp.skia_stamp_image(layer,hand,offset=[float(x+dx*DPI),float(y+dy*DPI)], sprite_origin=[.5,.5],copy=False)
                 
     return contig(layer)
 
-@rp.memoized_lru
+@rp.memoized_lru(2048)
 def get_trails_layer(tracks, visibles, frame_number, track_numbers=None):
 
     if track_numbers is None: track_numbers=range(N)
@@ -145,7 +154,7 @@ def get_trails_layer(tracks, visibles, frame_number, track_numbers=None):
             subtrails = []
             for t in range(frame_number+1):
                 vis = visibles[t, n]
-                xy  = tracks[t,n] * DPI
+                xy  = tracks[t,n].astype(float) * DPI  # Ensure float precision
                 if vis and not old_vis:
                     subtrails+=[[xy]]
                 elif vis and old_vis:
@@ -168,11 +177,12 @@ def get_trails_layer(tracks, visibles, frame_number, track_numbers=None):
                 close=False,
             )
             
-    layer=rp.with_drop_shadow(layer,color='black',blur=int(10 * DPI))
+    if not FAST_MODE:
+        layer=rp.with_drop_shadow(layer,color='black',blur=int(10 * DPI))
 
     return contig(layer)
 
-@rp.memoized_lru
+@rp.memoized_lru(2048)
 def get_arrows_layer(src_tracks,src_visibles,dst_tracks,dst_visibles,frame_number,track_numbers=None,circle_radius=12):
     if track_numbers is None: track_numbers=range(N)
     layer = rp.uniform_byte_color_image(H_SCALED, W_SCALED)
@@ -186,8 +196,8 @@ def get_arrows_layer(src_tracks,src_visibles,dst_tracks,dst_visibles,frame_numbe
 
         src_v = src_visibles[frame_number,n]
         dst_v = dst_visibles[frame_number,n]
-        src_xy = src_tracks[frame_number,n] * DPI
-        dst_xy = dst_tracks[frame_number,n] * DPI
+        src_xy = src_tracks[frame_number,n].astype(float) * DPI  # Ensure float precision
+        dst_xy = dst_tracks[frame_number,n].astype(float) * DPI  # Ensure float precision
         
         delta = dst_xy - src_xy
         delta_mag = rp.magnitude(delta)
@@ -197,8 +207,8 @@ def get_arrows_layer(src_tracks,src_visibles,dst_tracks,dst_visibles,frame_numbe
         dst_xy = dst_xy - delta_norm * circle_radius
         
         v = src_v and dst_v and delta_mag > 2 * circle_radius
-        dst_x, dst_y = dst_xy
-        src_x, src_y = src_xy
+        dst_x, dst_y = float(dst_xy[0]), float(dst_xy[1])  # Ensure float precision
+        src_x, src_y = float(src_xy[0]), float(src_xy[1])  # Ensure float precision
         
         
         if v:
@@ -217,11 +227,12 @@ def get_arrows_layer(src_tracks,src_visibles,dst_tracks,dst_visibles,frame_numbe
             )
 
 
-    layer=rp.with_drop_shadow(layer,color='black',blur=int(20 * DPI))
+    if not FAST_MODE:
+        layer=rp.with_drop_shadow(layer,color='black',blur=int(20 * DPI))
         
     return contig(layer)
 
-@rp.memoized_lru
+@rp.memoized_lru(2048)
 def get_status_layer(text, color='translucent green', width=200, offset=20, x_shift=0):
     background = rp.uniform_byte_color_image(height=int(60*DPI),width=int(width*DPI),color=color)
     background = rp.with_corner_radius(background, int(40*DPI), antialias=False)
@@ -233,7 +244,7 @@ def get_status_layer(text, color='translucent green', width=200, offset=20, x_sh
     label_image = rp.shift_image(label_image, x=int(x_shift*DPI))
     return contig(label_image)
 
-@rp.memoized_lru
+@rp.memoized_lru(2048)
 def get_chat_layer(text='Hello World', background_color='black', rim_color='gray', text_color='white', width=400, height=60, font_size=24, y_offset=-20):
     background = rp.uniform_byte_color_image(height=int(height*DPI), width=int(width*DPI), color=background_color)
     background = rp.with_corner_radius(background, int(20*DPI), antialias=False)
@@ -255,13 +266,19 @@ def srgb_blend(x,y,a):
     z = rp.linear_to_srgb(z)
     return z
 
-@rp.memoized_lru
+def imblend(x,y,a):return srgb_blend(x,y,a)
+def imblend(x,y,a):return rp.skia_stamp_image(x,y,alpha=a)
+
+@rp.memoized_lru(2048)
 def blended_video_layer(frame_number, alpha):
     counter_frame = rp.cv_resize_image(counter_video[frame_number], (H_SCALED, W_SCALED))
     target_frame = rp.cv_resize_image(target_video[frame_number], (H_SCALED, W_SCALED))
-    return srgb_blend(counter_frame, target_frame, alpha)
+    if FAST_MODE:
+        return imblend(counter_frame+0, target_frame+0, alpha)
+    else:
+        return srgb_blend(counter_frame, target_frame, alpha)
 
-@rp.memoized_lru
+@rp.memoized_lru(2048)
 def final_frame(
     frame_number=25,
     video_alpha=.5,
@@ -299,20 +316,19 @@ def final_frame(
 
     blended_frame = blended_video_layer(frame_number, video_alpha)
 
+    visible_hand_numbers = sorted(set(track_numbers) & set(hand_numbers))
+
     circles_layer = get_circles_layer(blended_tracks, visibles, frame_number, track_numbers)
     arrows_layer = get_arrows_layer(counter_tracks, counter_visibles, blended_tracks, target_visibles, frame_number, track_numbers)
     target_trails_layer  = get_trails_layer(target_tracks , target_visibles , frame_number, track_numbers)
     counter_trails_layer = get_trails_layer(counter_tracks, counter_visibles, frame_number, track_numbers)
     blended_trails_layer = get_trails_layer(blended_tracks, counter_visibles, frame_number, track_numbers)
-    hand_layer = get_hand_layer(blended_tracks, visibles, frame_number, hand_grabbing, hand_dx, hand_dy, hand_size, track_numbers)
+    hand_layer = get_hand_layer(blended_tracks, visibles, frame_number, hand_grabbing, hand_dx, hand_dy, hand_size, visible_hand_numbers)
     status_layer = get_status_layer(status_text, status_color, status_width, status_offset, status_x_shift)
     chat_layer = get_chat_layer(chat_text, chat_background_color, chat_rim_color, chat_text_color, chat_width, chat_height, chat_font_size, chat_y_offset)
 
     output = blended_frame
     
-    def imblend(x,y,a):return srgb_blend(x,y,a)
-    def imblend(x,y,a):return rp.skia_stamp_image(x,y,alpha=a)
-
     output = imblend(output, target_trails_layer , target_trails_alpha )
     output = imblend(output, blended_trails_layer, blended_trails_alpha)
     output = imblend(output, counter_trails_layer, counter_trails_alpha)
