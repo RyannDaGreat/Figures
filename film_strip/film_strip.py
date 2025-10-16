@@ -39,10 +39,10 @@ def film_strip(video, length=None, height=480, width=720):
     )
     film_dots = crop_image(film_dots, height=32, origin="center")
     alpha = skia_stamp_image(
-        alpha, film_dots, sprite_origin="top ", canvas_origin="top "
+        alpha, film_dots, sprite_origin="top", canvas_origin="top"
     )
     alpha = skia_stamp_image(
-        alpha, film_dots, sprite_origin="bottom ", canvas_origin="bottom "
+        alpha, film_dots, sprite_origin="bottom", canvas_origin="bottom"
     )
 
     strip = with_alpha_channel(strip, alpha)
