@@ -2,7 +2,7 @@ from rp import *
 from functools import partial
 
 
-def film_strip(video, length=None, height=480, width=720):
+def film_strip(video, length=None, height=None, width=None, vertical=False):
     """
     Create a film strip effect from a video sequence.
     
@@ -15,6 +15,16 @@ def film_strip(video, length=None, height=480, width=720):
     Returns:
         Image with film strip effect applied
     """
+
+    if vertical:
+        video = rp.rotate_images(video, angle=-90)
+        output = rp.gather_args_recursive_call(vertical=False)
+        output = rp.rotate_image(output, 90)
+        return output
+
+    if height is None:height=get_video_height(video)
+    if width is None:width=get_video_width(video)
+
     arrow = crop_image_zeros(skia_text_to_image("⮕", style="black"))
     down_arrow = rotate_image(arrow, 90)
     arr = partial(join_with_separator, separator=arrow)
