@@ -12,6 +12,7 @@ def create_image_stack(
     shadow_color="black",
     shadow_opacity=0.25,
     alphas_exponent=0.5,
+    corner_radius=10,
 ):
     video = resize_list(video, num_frames)  # 10 Frames
     video = resize_images_to_hold(video, height=frame_size, width=frame_size)
@@ -21,7 +22,7 @@ def create_image_stack(
     if total_shift_x is None: total_shift_x = total_shift
     if total_shift_y is None: total_shift_y = total_shift
 
-    video = with_corner_radii(video, radius=10)
+    video = with_corner_radii(video, radius=corner_radius)
     video = bordered_images_solid_color(video, color="transparent", thickness=30)
     video = with_drop_shadows(
         video,
