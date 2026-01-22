@@ -2,7 +2,7 @@ from rp import *
 from functools import partial
 
 
-def film_strip(video, length=None, height=None, width=None, vertical=False):
+def film_strip(video, length=None, height=None, width=None, vertical=False, film_color='black'):
     """
     Create a film strip effect from a video sequence.
     
@@ -40,12 +40,12 @@ def film_strip(video, length=None, height=None, width=None, vertical=False):
     video = pad(video)
 
     strip = horizontally_concatenated_images(video)
-    strip = blend_images("black", strip)
+    strip = blend_images(film_color, strip)
 
     alpha = get_alpha_channel(strip)
 
     film_dots = crop_image_zeros(
-        skia_text_to_image("• " * 100, style="black on white", font="Arial")
+        skia_text_to_image("• " * 1000, style="black on white", font="Arial")
     )
     film_dots = crop_image(film_dots, height=32, origin="center")
     alpha = skia_stamp_image(
@@ -54,6 +54,7 @@ def film_strip(video, length=None, height=None, width=None, vertical=False):
     alpha = skia_stamp_image(
         alpha, film_dots, sprite_origin="bottom", canvas_origin="bottom"
     )
+    alpha = blend_images(alpha, get_image_alpha(strip), mode='multiply')
 
     strip = with_alpha_channel(strip, alpha)
     strip = with_corner_radius(strip, 20)
