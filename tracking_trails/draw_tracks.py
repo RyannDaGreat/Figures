@@ -66,19 +66,23 @@ def draw_tracks(
         ... )
     """
 
-    # Validate shapes
-    T, N, H, W, C = rp.validate_tensor_shapes(
-        tracks="T N 2",
-        video="T H W C",
-        visible="T N",
-        XY=2,
-        C=3,
-        return_dims="T N H W C",
-    )
-
-    # Fill in missing visibility
+    # Validate shapes (C can be 3 or 4 for RGB or RGBA)
     if visible is None:
+        T, N, H, W, C = rp.validate_tensor_shapes(
+            tracks="T N 2",
+            video="T H W C",
+            XY=2,
+            return_dims="T N H W C",
+        )
         visible = np.ones((T, N), dtype=bool)
+    else:
+        T, N, H, W, C = rp.validate_tensor_shapes(
+            tracks="T N 2",
+            video="T H W C",
+            visible="T N",
+            XY=2,
+            return_dims="T N H W C",
+        )
 
     # Set background
     if background is None:
@@ -96,10 +100,15 @@ def draw_tracks(
     res_video = []
 
     for t in tqdm(range(T), desc="Drawing Tracks"):
-        # Create transparent surface
-        surface = skia.Surface.MakeRasterN32Premul(W, H)
+        # Create RGBA surface from background frame
+        bg_frame = background[t]
+        rgba_frame = rp.as_rgba_image(bg_frame, copy=False)
+
+        surface = skia.Surface.MakeRasterDirect(
+            skia.ImageInfo.Make(W, H, skia.kRGBA_8888_ColorType, skia.kOpaque_AlphaType),
+            rgba_frame
+        )
         canvas = surface.getCanvas()
-        canvas.clear(skia.ColorTRANSPARENT)
 
         # Determine historical range for this frame
         first_frame = max(0, t - trail_length) if trail_length > 0 else t
@@ -181,20 +190,10 @@ def draw_tracks(
                 stroke_paint.setColor(skia.Color(255, 255, 255, 51))
                 canvas.drawCircle(float(x_now), float(y_now), float(radius), stroke_paint)
 
-        # Get BGRA frame
+        # Get RGBA frame (with alpha channel we drew on)
         img = surface.makeImageSnapshot()
-        bgra = img.toarray()
-
-        # Composite onto background using alpha blending
-        alpha = bgra[:, :, 3:4].astype(np.float32) / 255.0  # Extract alpha, normalize to [0, 1]
-        rgb_fg = bgra[:, :, [2, 1, 0]].astype(np.float32)  # BGRA to RGB
-        rgb_bg = background[t].astype(np.float32)
-
-        # Alpha composite: out = fg * alpha + bg * (1 - alpha)
-        composited = rgb_fg * alpha + rgb_bg * (1.0 - alpha)
-        composited = np.clip(composited, 0, 255).astype(np.uint8)
-
-        res_video.append(composited)
+        rgba = img.toarray()
+        res_video.append(rgba)
 
     return np.array(res_video, dtype=np.uint8)
 
