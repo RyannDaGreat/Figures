@@ -25,6 +25,9 @@ def draw_tracks(
     trail_size=None,
     size=4,
     background=None,
+    rim_opacity=0.5,
+    rim_color='white',
+    rim_thickness=1,
 ):
     """
     Draw tracked points and motion trails on video frames.
@@ -32,6 +35,9 @@ def draw_tracks(
     Renders motion trails that taper in opacity and width from head to tail.
     Flexible color input via rp.as_rgba_float_color (supports strings like
     'green', hex codes, RGB tuples, etc.).
+
+    TODO: Future 3D version with parallax, occlusion, and per-track colors
+          (see scratch.py for initial implementation with Z-depth handling).
 
     Args:
         tracks: numpy array of shape (T, N, 2) containing (x, y) coordinates.
@@ -46,6 +52,9 @@ def draw_tracks(
         trail_size: Width multiplier for trail lines. If None, uses size parameter.
         size: Base size for both dot and trail (default 4). Overridden by dot_size/trail_size.
         background: Background frames to composite onto (default: original video).
+        rim_opacity: Opacity of dot border (0-1, default 0.5).
+        rim_color: Color of dot border (default 'white').
+        rim_thickness: Thickness of dot border in pixels (default 1).
 
     Returns:
         numpy array of shape (T, H, W, 4) with BGRA frames ready for video output.
@@ -92,6 +101,11 @@ def draw_tracks(
     rgba_float = rp.as_rgba_float_color(color)
     rgb_byte = rp.float_color_to_byte_color(rgba_float[:3])
     r, g, b = rgb_byte
+
+    # Convert rim color to byte RGB
+    rim_rgba_float = rp.as_rgba_float_color(rim_color)
+    rim_rgb_byte = rp.float_color_to_byte_color(rim_rgba_float[:3])
+    rim_r, rim_g, rim_b = rim_rgb_byte
 
     # Resolve dot and trail sizes
     actual_dot_size = dot_size if dot_size is not None else size
@@ -182,12 +196,12 @@ def draw_tracks(
                 fill_paint.setColor(skia.Color(int(r), int(g), int(b), 255))
                 canvas.drawCircle(float(x_now), float(y_now), float(radius), fill_paint)
 
-                # White border
+                # Rim border
                 stroke_paint = skia.Paint()
                 stroke_paint.setAntiAlias(True)
                 stroke_paint.setStyle(skia.Paint.kStroke_Style)
-                stroke_paint.setStrokeWidth(1.0)
-                stroke_paint.setColor(skia.Color(255, 255, 255, 51))
+                stroke_paint.setStrokeWidth(rim_thickness)
+                stroke_paint.setColor(skia.Color(rim_r, rim_g, rim_b, int(rim_opacity * 255)))
                 canvas.drawCircle(float(x_now), float(y_now), float(radius), stroke_paint)
 
         # Get RGBA frame (with alpha channel we drew on)
