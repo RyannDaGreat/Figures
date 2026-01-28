@@ -26,6 +26,10 @@ Image and video processing utilities for creating visual effects.
 
 ![Image Stack Animation](assets/image_stack_animation.gif)
 
+## Track Trails
+
+![Track Trails](assets/track_trails_demo.gif)
+
 ## Usage
 
 ```python

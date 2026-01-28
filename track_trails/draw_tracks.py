@@ -237,5 +237,5 @@ def demo():
     )
     print(f"Visualized video shape: {vis_video.shape}")
 
-    rp.save_video_mp4(vis_video, path='tracking_trails_demo.mp4')
-    print("Saved: tracking_trails_demo.mp4")
+    rp.save_video_mp4(vis_video, path='track_trails_demo.mp4')
+    print("Saved: track_trails_demo.mp4")
