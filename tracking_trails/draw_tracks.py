@@ -75,23 +75,22 @@ def draw_tracks(
         ... )
     """
 
-    # Validate shapes (C can be 3 or 4 for RGB or RGBA)
+    # Convert torch tensors to numpy for speed
+    tracks = rp.as_numpy_array(tracks)
+    video = rp.as_numpy_array(video)
+
+    T, N, H, W, C = rp.validate_tensor_shapes(
+        tracks="T N 2",
+        video="T H W C",
+        XY=2,
+        return_dims="T N H W C",
+    )
+
     if visible is None:
-        T, N, H, W, C = rp.validate_tensor_shapes(
-            tracks="T N 2",
-            video="T H W C",
-            XY=2,
-            return_dims="T N H W C",
-        )
         visible = np.ones((T, N), dtype=bool)
-    else:
-        T, N, H, W, C = rp.validate_tensor_shapes(
-            tracks="T N 2",
-            video="T H W C",
-            visible="T N",
-            XY=2,
-            return_dims="T N H W C",
-        )
+    visible = rp.as_numpy_array(visible)
+    assert visible.shape == (T, N), visible.shape
+
 
     # Set background
     if background is None:
@@ -134,7 +133,7 @@ def draw_tracks(
             # Current position and visibility
             x_now = tracks[t, i, 0]
             y_now = tracks[t, i, 1]
-            is_visible_now = visible[t, i].item() > 0 if visible is not None else True
+            is_visible_now = visible[t, i].item()
 
             # Draw trail
             if trail_length > 0 and trail_length_actual >= 2:
@@ -143,7 +142,7 @@ def draw_tracks(
                 for s in range(trail_start, trail_end):
                     x_hist = tracks[s, i, 0]
                     y_hist = tracks[s, i, 1]
-                    is_vis = visible[s, i].item() > 0 if visible is not None else True
+                    is_vis = visible[s, i].item()
 
                     if is_vis and (x_hist != 0 or y_hist != 0):
                         points.append((x_hist, y_hist))
